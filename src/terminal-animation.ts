@@ -1,0 +1,94 @@
+import { setTimeout as delay } from 'node:timers/promises';
+import { effectDuration } from './sound.ts';
+import type { ReactionEvent } from './reactions.ts';
+
+type FrameEvent = Pick<ReactionEvent, 'reaction' | 'intensity'>;
+export interface TerminalStream {
+  isTTY?: boolean;
+  columns?: number;
+  rows?: number;
+  write(text: string): unknown;
+}
+
+const WIDTH = 58;
+const HEIGHT = 11;
+const labels = { whip: 'FOUET / CLAC !', whip_hard: 'BATTE DE BASEBALL / BONK !',
+  encourage: 'ENCOURAGEMENT / BRAVO !', reward: 'RECOMPENSE / LEVEL UP !' };
+
+/** Frames belong to this CLI only; never write ANSI into the MCP protocol stream. */
+export function terminalFrame(event: FrameEvent, seconds: number): string {
+  if (!Object.hasOwn(labels, event.reaction)) throw new Error('Réaction inconnue.');
+  const grid = Array.from({ length: HEIGHT }, () => Array<string>(WIDTH).fill(' '));
+  function put(x: number, y: number, text: string) {
+    if (y < 0 || y >= HEIGHT) return;
+    for (const [i, char] of [...text].entries()) {
+      if (x + i >= 0 && x + i < WIDTH) grid[y]![x + i] = char;
+    }
+  }
+  const striking = event.reaction === 'whip' || event.reaction === 'whip_hard';
+  let impact = false;
+  let winding = false;
+  for (let hit = 0; hit < event.intensity; hit++) {
+    const local = seconds - (0.55 + hit * 0.5);
+    impact ||= striking && local >= 0 && local < 0.22;
+    winding ||= local >= -0.24 && local < 0;
+  }
+  if (!striking) {
+    for (let i = 0; i < 8 + event.intensity * 4; i++) {
+      put(3 + i * 13 % 52, 2 + Math.floor(seconds * 4 + i * 3.7) % 7, i % 3 ? '+' : '*');
+    }
+  }
+  put(1, 0, `${labels[event.reaction]}  [${event.intensity}/3]`);
+  const x = 30 + (impact ? Math.floor(seconds * 30) % 2 : 0);
+  const y = !striking && Math.sin(seconds * 6) > 0 ? 2 : 3;
+  put(x, y, '    o    ');
+  put(x, y + 1, ' .-----.' );
+  put(x, y + 2, impact ? ' | >.< |' : striking ? ' | o_o |' : ' | ^_^ |');
+  put(x, y + 3, ' +-----+');
+  put(x, y + 4, !striking ? '\\| AI |/' : '/| AI |\\');
+  put(x, y + 5, '  /   \\');
+  if (event.reaction === 'whip_hard') {
+    if (winding) {
+      put(19, 2, '/===)'); put(17, 3, '//'); put(15, 4, '//'); put(13, 5, 'o/');
+    } else {
+      put(9, 5, 'o==/////====[=======)');
+    }
+    if (impact) { put(41, 3, '* BONK! *'); put(28, 4, '*'); }
+  } else if (event.reaction === 'whip') {
+    put(8, 5, winding ? 'o==)~~\\__' : 'o==)~~~~~----~>');
+    if (impact) put(41, 3, '* CLAC! *');
+  } else if (event.reaction === 'reward') {
+    put(10, 3, '\\===/'); put(10, 4, ' \\_/'); put(10, 5, '  |'); put(10, 6, ' _|_');
+    put(43, 6, `+${event.intensity === 1 ? 10 : event.intensity === 2 ? 50 : 100} XP`);
+  } else {
+    put(11, 4, '\\  |  /'); put(11, 5, '-- * --'); put(11, 6, '/  |  \\');
+    put(43, 6, 'BRAVO !');
+  }
+  const progress = Math.max(0, 1 - seconds * 1000 / effectDuration(event.reaction, event.intensity));
+  put(1, 10, '='.repeat(Math.round(56 * progress)));
+  const border = `+${'-'.repeat(WIDTH)}+`;
+  return [border, ...grid.map((line) => `|${line.join('')}|`), border].join('\n');
+}
+
+export function canAnimate(stream: TerminalStream): boolean {
+  return Boolean(stream.isTTY && (stream.columns ?? 80) >= WIDTH + 3 && (stream.rows ?? 24) >= HEIGHT + 5);
+}
+
+export async function animateTerminal(event: FrameEvent, stream: TerminalStream = process.stdout): Promise<void> {
+  // Redirected output (including most AI tool consoles) gets one clean static frame.
+  if (!canAnimate(stream)) {
+    stream.write(`${terminalFrame(event, 0.6)}\n`);
+    return;
+  }
+  const start = performance.now();
+  const duration = effectDuration(event.reaction, event.intensity);
+  let drawn = false;
+  while (performance.now() - start < duration) {
+    if (!canAnimate(stream)) break;
+    if (drawn) stream.write(`\x1b[${HEIGHT + 2}F`);
+    const frame = terminalFrame(event, (performance.now() - start) / 1000);
+    stream.write(`${frame.split('\n').map((line) => `${line}\x1b[K`).join('\n')}\n`);
+    drawn = true;
+    await delay(50);
+  }
+}
