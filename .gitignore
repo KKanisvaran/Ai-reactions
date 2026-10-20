@@ -12,3 +12,6 @@ coverage/
 .codex/config.toml
 .DS_Store
 Thumbs.db
+
+# KK LAB original artwork stays local (all rights reserved)
+assets/

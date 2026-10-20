@@ -344,8 +344,11 @@ réglages du visualiseur, le volume et la sortie audio Windows.
 
 ## Licence et sources
 
-Licence ISC conservée, voir [LICENSE](LICENSE). Dessins et sons originaux ; aucun
-code ou asset GoodClaude copié. Les dépendances gardent leurs licences.
+Code sous licence **MIT**, voir [LICENSE](LICENSE). **Exception** : le nom et le
+logo **KK LAB** et la mascotte tigre (y compris sa version pixel art dans
+`src/mascot.ts` et l’intro) restent © KKanisvaran, **tous droits réservés** ;
+toute autre utilisation demande une autorisation écrite. Sons et animations ASCII
+originaux. Les dépendances gardent leurs licences.
 
 - [Node.js : versions et support](https://nodejs.org/en/about/previous-releases)
 - [SDK MCP officiel](https://github.com/modelcontextprotocol/typescript-sdk)

@@ -1,3 +1,4 @@
+// KK LAB tiger mascot: © KKanisvaran, all rights reserved (excluded from the MIT license, see LICENSE).
 // Generated from mascotte.svg (KK LAB tiger): 40x44 pixels, one palette digit per pixel, '.' = transparent.
 export const mascotPalette = ['fffdf3', '000000', '557ab2', 'b7b2ac', '323c51', '897b6c', '8ca5c8', 'dbd6ce', '2c4c85', '122044', '97999e', '54617b', 'f0e3cd', '203765', 'bbbbbe', '718099', '698dc2', '292c31', '0e1218', '374666', '3d63a1', 'cbc9c4', '9b8b79', '556d96', '60646c', 'e7e4de', 'a7adb7', '6b7383', '405782', '1c2c51', 'a6a6a8', '838894', 'f8efe0', '4a5265', '7e95b6', 'aab9cb'];
 export const mascotPixels = [
