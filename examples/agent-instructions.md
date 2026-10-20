@@ -1,8 +1,8 @@
 Mots-clés de réaction (un seul outil par demande, intensité 1 par défaut) :
-- `ko1` → `whip` (fouet).
-- `ko2` → `whip_hard` (coup de batte).
-- `gret job` → `encourage` (orthographe volontaire).
-- `great job dude` → `reward` (récompense, pas encouragement).
+- `clac` → `whip` (fouet).
+- `bonk` → `whip_hard` (coup de batte).
+- `bien joué` → `encourage`.
+- `gg` → `reward` (récompense, pas encouragement).
 - `trop long` → `too_slow` (escargot, impatience chill).
 - `chill` → `chill` (palmier lo-fi).
 - `wtf` → `confused` (perplexe).

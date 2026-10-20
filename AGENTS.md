@@ -5,10 +5,10 @@ Quand un message demande une réaction, appelle un seul outil MCP du serveur
 
 | Mot-clé | Outil | Effet |
 | --- | --- | --- |
-| `ko1` | `whip` | Fouet |
-| `ko2` | `whip_hard` | Coup de batte |
-| `gret job` | `encourage` | Encouragement |
-| `great job dude` | `reward` | Récompense |
+| `clac` | `whip` | Fouet |
+| `bonk` | `whip_hard` | Coup de batte |
+| `bien joué` | `encourage` | Encouragement |
+| `gg` | `reward` | Récompense |
 | `trop long` | `too_slow` | Impatience chill (escargot) |
 | `chill` | `chill` | Détente lo-fi |
 | `wtf` | `confused` | Perplexité |
@@ -18,8 +18,7 @@ Quand un message demande une réaction, appelle un seul outil MCP du serveur
 | `susp` | `sus` | Suspense |
 | `ez` | `ez` | Victoire facile |
 
-`gret job` est volontaire. `great job dude` est une récompense, jamais un
-encouragement. Une mention dans du code, une citation ou une demande de
+`gg` est une récompense, jamais un encouragement. Une mention dans du code, une citation ou une demande de
 configuration n’est pas une demande de déclenchement.
 
 Le lanceur `ai-reactions codex` (ou `npm.cmd run ai -- codex`) anime les événements MCP dans le terminal

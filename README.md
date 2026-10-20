@@ -65,10 +65,10 @@ Puis envoie un de ces messages dans le chat :
 
 | Mot-clé | Réaction |
 | --- | --- |
-| `ko1` | Fouet |
-| `ko2` | Coup de batte |
-| `gret job` | Encouragement (orthographe volontaire) |
-| `great job dude` | Récompense |
+| `clac` | Fouet |
+| `bonk` | Coup de batte |
+| `bien joué` | Encouragement |
+| `gg` | Récompense |
 | `trop long` | Escargot, sablier et tic-tac (« ça traîne… ») |
 | `chill` | Lunettes de soleil, palmier, notes de musique et accord lo-fi |
 | `wtf` | Points d’interrogation et « hein ? » montant |
@@ -125,10 +125,10 @@ pas `watch` en même temps que `ai`. Pour des sessions indépendantes, configure
 
 | Outil | Demande à l’IA | Réaction |
 | --- | --- | --- |
-| `whip` | `ko1`, `fouette-le` | Fouet et claquement |
-| `whip_hard` | `ko2`, `coup de batte`, `mega clac`, `fouette-le fort` | Batte de baseball cartoon et impact en bois |
-| `encourage` | `gret job`, `encourage-le` | Robot souriant, étoiles et notes positives |
-| `reward` | `great job dude`, `récompense-le` | Trophée, confettis, XP et son de victoire |
+| `whip` | `clac`, `fouette-le` | Fouet et claquement |
+| `whip_hard` | `bonk`, `coup de batte`, `mega clac`, `fouette-le fort` | Batte de baseball cartoon et impact en bois |
+| `encourage` | `bien joué`, `encourage-le` | Robot souriant, étoiles et notes positives |
+| `reward` | `gg`, `récompense-le` | Trophée, confettis, XP et son de victoire |
 | `too_slow` | `trop long`, `ça traîne` | Escargot, sablier et tic-tac d’horloge |
 | `chill` | `chill`, `tranquille`, `relax` | Lunettes de soleil, palmier et accord lo-fi |
 | `confused` | `wtf`, `hein ?` | Points d’interrogation et glissando « huh ? » |

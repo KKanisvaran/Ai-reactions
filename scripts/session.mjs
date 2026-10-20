@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 if (args[0] === '--') args.shift();
 if (args[0] === '--help') {
   console.log('Usage : ai-reactions codex [arguments] (ou claude, gemini)\n'
-    + 'Dans le chat : ko1 = fouet ; ko2 = batte ; gret job = encouragement ; great job dude = récompense ;\n'
+    + 'Dans le chat : clac = fouet ; bonk = batte ; bien joué = encouragement ; gg = récompense ;\n'
     + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
     + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.\n'
     + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.');

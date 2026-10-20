@@ -9,22 +9,22 @@ export const reactionInput = z.strictObject({
 export const reactionDefinitions = {
   whip: {
     title: 'Fouet',
-    description: 'Mot-clé exact « ko1 » : fouet. Déclenche un effet local de fouet symbolique. À appeler aussi pour « fouette-le », « coup de fouet » ou « whip ». Ne touche jamais au clavier ni au processus de l’IA.',
+    description: 'Mot-clé exact « clac » : fouet. Déclenche un effet local de fouet symbolique. À appeler aussi pour « fouette-le », « coup de fouet » ou « whip ». Ne touche jamais au clavier ni au processus de l’IA.',
     messages: ['CLAC !', 'CLAC ! CLAC !', 'CLAC ! CLAC ! CLAC !'],
   },
   encourage: {
     title: 'Encouragement',
-    description: 'Mot-clé exact « gret job » : encouragement. Ne pas confondre avec « great job dude », qui appelle reward. Déclenche une réaction locale positive. À appeler aussi pour « encourage-le », « bravo » ou « encourage ». Ne touche jamais au clavier ni au processus de l’IA.',
+    description: 'Mot-clé exact « bien joué » : encouragement. Ne pas confondre avec « gg », qui appelle reward. Déclenche une réaction locale positive. À appeler aussi pour « encourage-le », « bravo » ou « encourage ». Ne touche jamais au clavier ni au processus de l’IA.',
     messages: ['Bravo, continue !', 'Super travail, garde le cap !', 'Excellent travail ! Tu peux être fier de toi !'],
   },
   whip_hard: {
     title: 'Coup de batte de baseball',
-    description: 'Mot-clé exact « ko2 » : coup de batte de baseball cartoon, avec élan, étoiles et impact sonore en bois. À appeler aussi pour « coup de batte », « mega clac », « fouette-le fort » ou « whip hard ». Le nom whip_hard est conservé pour compatibilité. Aucune interruption de l’IA.',
+    description: 'Mot-clé exact « bonk » : coup de batte de baseball cartoon, avec élan, étoiles et impact sonore en bois. À appeler aussi pour « coup de batte », « mega clac », « fouette-le fort » ou « whip hard ». Le nom whip_hard est conservé pour compatibilité. Aucune interruption de l’IA.',
     messages: ['BONK ! Coup de batte !', 'MEGA BONK ! Coup de batte !', 'HOME RUN ! Triple coup de batte !'],
   },
   reward: {
     title: 'Récompense',
-    description: 'Mot-clé exact « great job dude » : récompense, et non encouragement. Déclenche une récompense animée avec trophée, pièces et son de victoire. À appeler aussi pour « récompense-le », « donne-lui une récompense » ou « reward ».',
+    description: 'Mot-clé exact « gg » : récompense, et non encouragement. Déclenche une récompense animée avec trophée, pièces et son de victoire. À appeler aussi pour « récompense-le », « donne-lui une récompense » ou « reward ».',
     messages: ['Bien mérité ! +10 XP', 'Mission accomplie ! +50 XP', 'Légendaire ! +100 XP'],
   },
   too_slow: {
