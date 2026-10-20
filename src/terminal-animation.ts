@@ -13,7 +13,12 @@ export interface TerminalStream {
 const WIDTH = 58;
 const HEIGHT = 11;
 const labels = { whip: 'FOUET / CLAC !', whip_hard: 'BATTE DE BASEBALL / BONK !',
-  encourage: 'ENCOURAGEMENT / BRAVO !', reward: 'RECOMPENSE / LEVEL UP !' };
+  encourage: 'ENCOURAGEMENT / BRAVO !', reward: 'RECOMPENSE / LEVEL UP !',
+  too_slow: 'TROP LONG / ZZZ...', chill: 'CHILL / LO-FI', confused: 'WTF / HEIN ?', facepalm: 'BRUH / FACEPALM',
+  hype: 'HYPE / LET\'S GOOO !', rip: 'RIP / PAIX A SON CODE', sus: 'SUS / HMM...', ez: 'EZ / TROP FACILE' };
+const particles: Record<string, string> = { too_slow: 'z', chill: '♪', confused: '?', facepalm: '.', hype: '*', rip: '+', sus: '.', ez: '`' };
+const faces: Record<string, string> = { too_slow: ' | u_u |', chill: ' | B-) |', confused: ' | o_O |', facepalm: ' | -_- |',
+  hype: ' | ^o^ |', rip: ' | x_x |', sus: ' | ¬_¬ |', ez: ' | -u- |' };
 
 /** Frames belong to this CLI only; never write ANSI into the MCP protocol stream. */
 export function terminalFrame(event: FrameEvent, seconds: number): string {
@@ -35,7 +40,7 @@ export function terminalFrame(event: FrameEvent, seconds: number): string {
   }
   if (!striking) {
     for (let i = 0; i < 8 + event.intensity * 4; i++) {
-      put(3 + i * 13 % 52, 2 + Math.floor(seconds * 4 + i * 3.7) % 7, i % 3 ? '+' : '*');
+      put(3 + i * 13 % 52, 2 + Math.floor(seconds * 4 + i * 3.7) % 7, particles[event.reaction] ?? (i % 3 ? '+' : '*'));
     }
   }
   put(1, 0, `${labels[event.reaction]}  [${event.intensity}/3]`);
@@ -43,7 +48,7 @@ export function terminalFrame(event: FrameEvent, seconds: number): string {
   const y = !striking && Math.sin(seconds * 6) > 0 ? 2 : 3;
   put(x, y, '    o    ');
   put(x, y + 1, ' .-----.' );
-  put(x, y + 2, impact ? ' | >.< |' : striking ? ' | o_o |' : ' | ^_^ |');
+  put(x, y + 2, impact ? ' | >.< |' : striking ? ' | o_o |' : faces[event.reaction] ?? ' | ^_^ |');
   put(x, y + 3, ' +-----+');
   put(x, y + 4, !striking ? '\\| AI |/' : '/| AI |\\');
   put(x, y + 5, '  /   \\');
@@ -60,6 +65,34 @@ export function terminalFrame(event: FrameEvent, seconds: number): string {
   } else if (event.reaction === 'reward') {
     put(10, 3, '\\===/'); put(10, 4, ' \\_/'); put(10, 5, '  |'); put(10, 6, ' _|_');
     put(43, 6, `+${event.intensity === 1 ? 10 : event.intensity === 2 ? 50 : 100} XP`);
+  } else if (event.reaction === 'too_slow') {
+    put(10, 3, '[===]'); put(10, 4, seconds % 1 < 0.5 ? ' \\:/' : ' \\./'); put(10, 5, ' /.\\'); put(10, 6, '[===]');
+    put(2 + Math.floor(seconds * 2), 8, '__@)');
+    put(43, 6, 'ZZZ...');
+  } else if (event.reaction === 'chill') {
+    const sway = Math.floor(seconds * 2) % 2;
+    put(9, 3, sway ? '\\|//' : '//|\\'); put(11, 4, '|'); put(11, 5, '|'); put(10, 6, '_|_');
+    put(18, 2 + Math.floor(seconds * 3) % 3, sway ? '♪  ♫' : '♫  ♪');
+    put(43, 6, 'CHILL...');
+  } else if (event.reaction === 'confused') {
+    put(10, 3, ' __ '); put(10, 4, '   )'); put(10, 5, '  / '); put(10, 7, '  o ');
+    put(43, 6, 'HEIN ?');
+  } else if (event.reaction === 'facepalm') {
+    put(x + 6, y + 2, '<m'); put(10, 5, 'wah... wah...');
+    put(43, 6, 'BRUH.');
+  } else if (event.reaction === 'hype') {
+    const lift = Math.floor(seconds * 4) % 7;
+    put(10, 7 - lift, '/\\'); put(10, 8 - lift, '||'); put(10, 9 - lift, seconds * 8 % 2 < 1 ? '^^' : '**');
+    put(43, 6, 'LET\'S GO !');
+  } else if (event.reaction === 'rip') {
+    put(9, 3, ' .---.'); put(9, 4, '|     |'); put(9, 5, '| RIP |'); put(9, 6, '|     |'); put(8, 7, '\"\"\"\"\"\"\"\"\"');
+    put(43, 6, 'R.I.P.');
+  } else if (event.reaction === 'sus') {
+    put(10, 4, Math.floor(seconds * 2) % 2 ? '<-- ?' : '? -->'); put(10, 6, '...');
+    put(43, 6, 'SUS.');
+  } else if (event.reaction === 'ez') {
+    put(10, 4, 'GG EZ'); if (Math.floor(seconds * 3) % 2) put(9, 6, '*ding*');
+    put(43, 6, 'EZ.');
   } else {
     put(11, 4, '\\  |  /'); put(11, 5, '-- * --'); put(11, 6, '/  |  \\');
     put(43, 6, 'BRAVO !');

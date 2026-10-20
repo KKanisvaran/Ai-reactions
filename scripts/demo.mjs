@@ -1,12 +1,16 @@
 import { connect } from './client.mjs';
 import { effectOptions, playTerminalEffect } from '../dist/terminal-output.js';
+import { reactionDefinitions } from '../dist/reactions.js';
 
 let session;
 try {
   const args = process.argv.slice(2);
-  const names = args.filter((arg) => arg !== '--terminal');
-  const available = ['whip', 'encourage', 'whip_hard', 'reward'];
-  if (names.some((name) => !available.includes(name))) throw new Error('Réaction inconnue. Utilisez whip, encourage, whip_hard ou reward.');
+  const available = Object.keys(reactionDefinitions);
+  // Accept the chat keyword (gg, trop long…) as well as the MCP tool name.
+  const byKeyword = Object.fromEntries(available.map((name) => [reactionDefinitions[name].keyword, name]));
+  const names = args.filter((arg) => arg !== '--terminal').map((arg) => byKeyword[arg] ?? arg);
+  if (names.some((name) => !available.includes(name)))
+    throw new Error(`Réaction inconnue. Mots-clés : ${Object.keys(byKeyword).join(', ')}`);
   const options = effectOptions();
   session = await connect({ effects: 'text' });
   const { tools } = await session.client.listTools();

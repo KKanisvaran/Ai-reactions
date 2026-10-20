@@ -1,6 +1,6 @@
 import { appendFile, mkdir } from 'node:fs/promises';
-import { dirname, isAbsolute } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { homedir } from 'node:os';
+import { dirname, isAbsolute, join } from 'node:path';
 import type { ReactionEvent, ReactionOutput } from './reactions.ts';
 
 export function reactionLogPath(env: NodeJS.ProcessEnv = process.env): string {
@@ -11,8 +11,8 @@ export function reactionLogPath(env: NodeJS.ProcessEnv = process.env): string {
     }
     return configured;
   }
-  // Same location in src/ and dist/, independent of the host CLI working directory.
-  return fileURLToPath(new URL('../.local/reactions.jsonl', import.meta.url));
+  // Per-user location: a global npm install directory may be read-only.
+  return join(homedir(), '.ai-reactions', 'reactions.jsonl');
 }
 
 /** stdout belongs exclusively to the MCP transport. */

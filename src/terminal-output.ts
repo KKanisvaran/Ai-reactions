@@ -1,4 +1,7 @@
-import { execFile } from 'node:child_process';
+import { execFile, spawn } from 'node:child_process';
+import { randomUUID } from 'node:crypto';
+import { rm, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { diagnostic, LocalOutput } from './local-output.ts';
@@ -6,6 +9,8 @@ import type { ReactionEvent, ReactionOutput } from './reactions.ts';
 import { synthesizeSound } from './sound.ts';
 import { animateTerminal } from './terminal-animation.ts';
 import type { TerminalStream } from './terminal-animation.ts';
+
+type SoundEvent = Pick<ReactionEvent, 'reaction' | 'intensity'>;
 
 export interface EffectOptions {
   mode: 'terminal' | 'text';
@@ -24,11 +29,11 @@ export function effectOptions(env: NodeJS.ProcessEnv = process.env, platform = p
   const volume = Number(volumeText);
   if (!volumeText.trim() || !Number.isFinite(volume) || volume < 0 || volume > 1)
     throw new Error('AI_REACTIONS_VOLUME doit être compris entre 0 et 1.');
-  return { mode, sound: platform === 'win32' && sound === '1' && volume > 0, volume };
+  return { mode, sound: ['win32', 'darwin', 'linux'].includes(platform) && sound === '1' && volume > 0, volume };
 }
 
 /** Audio only: no WPF, GUI, console window, keyboard or focus API. */
-export function startWindowsSound(event: ReactionEvent, volume: number) {
+export function startWindowsSound(event: SoundEvent, volume: number) {
   const wav = synthesizeSound(event.reaction, event.intensity, volume);
   let resolveReady!: () => void;
   let rejectReady!: (error: Error) => void;
@@ -57,10 +62,32 @@ export function startWindowsSound(event: ReactionEvent, volume: number) {
   return { ready, finished };
 }
 
+/** macOS (afplay) and Linux (paplay, then aplay); a missing player only mutes the effect. */
+export function startUnixSound(event: SoundEvent, volume: number, platform = process.platform) {
+  const wav = synthesizeSound(event.reaction, event.intensity, volume);
+  const file = join(tmpdir(), `ai-reactions-${randomUUID()}.wav`);
+  const players = platform === 'darwin' ? [['afplay', file]] : [['paplay', file], ['aplay', '-q', file]];
+  const play = (index: number): Promise<void> => new Promise((resolve) => {
+    const [command, ...args] = players[index]!;
+    const next = () => resolve(index + 1 < players.length ? play(index + 1) : undefined);
+    const child = spawn(command!, args, { stdio: 'ignore', timeout: 10000 });
+    child.once('error', next);
+    child.once('exit', (code) => { if (code === 0) resolve(); else next(); });
+  });
+  const ready = writeFile(file, wav);
+  const finished = ready.then(() => play(0)).finally(() => rm(file, { force: true }));
+  void finished.catch(() => {});
+  return { ready, finished };
+}
+
+export function startSound(event: SoundEvent, volume: number) {
+  return process.platform === 'win32' ? startWindowsSound(event, volume) : startUnixSound(event, volume);
+}
+
 export async function playTerminalEffect(event: ReactionEvent, options = effectOptions(), stream: TerminalStream = process.stdout) {
   if (options.mode === 'text') return;
   if (!options.sound) return animateTerminal(event, stream);
-  const audio = startWindowsSound(event, options.volume);
+  const audio = startSound(event, options.volume);
   await audio.ready;
   await Promise.all([animateTerminal(event, stream), audio.finished]);
 }
@@ -74,7 +101,7 @@ export class TerminalOutput implements ReactionOutput {
   constructor(_options = effectOptions(), local: ReactionOutput = new LocalOutput(),
     run: (event: ReactionEvent) => Promise<unknown> = async (event) => {
       // The host owns its TUI even when stderr is a TTY: never move its cursor.
-      diagnostic(`Réaction ${event.reaction} disponible pour le visualiseur : npm run watch.`);
+      diagnostic(`Réaction ${event.reaction} disponible dans le terminal du lanceur : ai-reactions codex (ou visualiseur séparé : ai-reactions watch).`);
     }) {
     this.local = local; this.run = run;
   }

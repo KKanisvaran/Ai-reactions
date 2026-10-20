@@ -1,36 +1,61 @@
 # ai-reactions
 
-**Toutes les animations s’affichent dans le terminal** : fouet, batte de baseball,
-encouragements et récompense. Le rendu est en ASCII animé, avec sons synthétisés
-sous Windows. Aucun overlay, aucune fenêtre graphique, aucun téléchargement d’asset.
+**Des réactions animées et sonores directement dans le terminal de ton IA**
+(Codex, Claude Code, Gemini CLI) : fouet, batte de baseball, encouragements,
+récompense, et des réactions plus chill (escargot « trop long », palmier lo-fi,
+facepalm, pierre tombale…). Rendu ASCII animé, sons synthétisés à la volée.
+Aucun overlay, aucune fenêtre graphique, aucun téléchargement d’asset.
 
-Les IA appellent directement un serveur MCP TypeScript en `stdio`. Aucune
-simulation de clavier, injection de touches ou interruption du processus de l’IA.
-Pas de Ctrl+C nécessaire : démo et visualiseur se terminent automatiquement.
+Les IA appellent un serveur MCP en `stdio`. Aucune simulation de clavier,
+injection de touches ou interruption du processus de l’IA.
 
-## Installation et essai
+## Installation (CLI)
 
-Prérequis : Node.js **24 LTS** et npm. Sous Windows, le son utilise Windows
-PowerShell 5.1 et `System.Media.SoundPlayer`, fournis par Windows. Aucun package
-npm natif, WPF ou clé API nécessaire. Aucune requête réseau après installation.
+Prérequis : **Node.js 24** ou plus récent, et l’IA de ton choix déjà installée.
 
-Depuis le dépôt, dans PowerShell :
+```sh
+git clone https://github.com/KKanisvaran/Ai-reactions.git
+npm install -g --install-links --allow-scripts=node-pty ./Ai-reactions
+ai-reactions setup        # enregistre le serveur MCP dans codex, claude et gemini s’ils sont installés
+ai-reactions codex        # lance Codex avec les animations (ou : ai-reactions claude / gemini)
+```
+
+Dépôt public, sans clone : `npm install -g --allow-scripts=node-pty
+https://github.com/KKanisvaran/Ai-reactions/archive/refs/heads/main.tar.gz`.
+Éviter `npm install -g github:…` : npm 11 échoue sur ce type d’installation globale.
+
+`setup` peut viser un seul client : `ai-reactions setup claude`. Il enregistre le
+serveur pour l’utilisateur, donc dans tous les projets. S’il est déjà enregistré,
+lancer `codex mcp remove ai-reactions` (ou `claude` / `gemini`) puis relancer.
+
+À la fin de `setup` et au premier lancement, une intro **KK LAB** présente le
+tigre et les mots-clés à taper dans le chat. Pour la revoir : `ai-reactions intro`.
+
+Pour essayer sans IA : `ai-reactions demo` (ou `ai-reactions demo chill rip`).
+`ai-reactions --help` liste toutes les commandes. Désinstallation :
+`npm uninstall -g ai-reactions`.
+
+| Système | Animations | Son | Notes |
+| --- | --- | --- | --- |
+| Windows 10 1809+ / 11 | Oui | Oui (PowerShell, intégré) | Binaires `node-pty` précompilés |
+| macOS | Oui | Oui (`afplay`, intégré) | Binaires `node-pty` précompilés |
+| Linux | Oui | Si `paplay` ou `aplay` est présent | `node-pty` est compilé : `python3`, `make`, `g++` requis |
+
+Les anciennes versions de npm n’ont pas l’option `--allow-scripts` : l’enlever.
+Sans son lecteur audio, l’effet reste simplement muet.
+
+## Depuis le dépôt (développement)
 
 ```powershell
 npm.cmd ci
 npm.cmd test
 npm.cmd run demo
+npm.cmd run ai -- codex
 ```
 
-La démo appelle les quatre outils via un vrai client MCP et joue les animations
-dans **ce terminal**, avec son, puis termine. Pour un seul effet :
-
-```powershell
-npm.cmd run demo -- whip
-npm.cmd run demo -- whip_hard
-npm.cmd run demo -- encourage
-npm.cmd run demo -- reward
-```
+`npm link` installe la commande `ai-reactions` depuis ta copie locale. `dist/` est
+versionné pour que l’installation depuis GitHub n’ait rien à compiler : après une
+modification de `src/`, lancer `npm.cmd run build` et commiter `dist/` avec.
 
 Le terminal doit être interactif et mesurer au moins **61 colonnes et 16 lignes**.
 Une sortie capturée par une IA, un fichier ou un pipeline reçoit une image fixe
@@ -40,9 +65,51 @@ arrête les déplacements de curseur.
 
 ## Réactions déclenchées par une IA
 
-Codex, Claude et Gemini possèdent leur propre interface. MCP ne permet pas
-d’imposer une animation à l’intérieur de cette interface. Le serveur ne tente
-jamais de dessiner par-dessus son écran, même si son stderr est un terminal.
+Lance **l’IA avec le lanceur** :
+
+```sh
+ai-reactions codex
+```
+
+Puis envoie un de ces messages dans le chat :
+
+| Mot-clé | Réaction |
+| --- | --- |
+| `clac` | Fouet |
+| `bonk` | Coup de batte |
+| `bien joué` | Encouragement |
+| `gg` | Récompense |
+| `trop long` | Escargot, sablier et tic-tac (« ça traîne… ») |
+| `chill` | Lunettes de soleil, palmier, notes de musique et accord lo-fi |
+| `wtf` | Points d’interrogation et « hein ? » montant |
+| `bruh` | Facepalm et trombone triste |
+| `let's go` | Fusée qui décolle et fanfare montante |
+| `rip` | Pierre tombale cartoon et orgue mélancolique |
+| `susp` | Suspense : regard suspicieux et deux notes graves |
+| `ez` | Victoire trop facile et petit « ding » |
+
+L’IA appelle l’outil MCP correspondant. L’animation complète et son son sont
+joués **dans le même terminal**, puis l’écran de l’IA est restauré avec ses
+derniers messages. Elle continue à travailler pendant l’effet. Les touches
+réellement saisies sont transmises à l’IA ; aucune touche n’est fabriquée pour
+déclencher une réaction. Quitte l’IA normalement pour fermer aussi le lanceur.
+La compilation est automatique au lancement. Les arguments après `codex` sont
+transmis au client. `claude` et `gemini` sont également acceptés si installés et
+configurés avec ce serveur MCP (voir plus bas).
+
+Le lanceur possède le terminal physique et héberge le client dans un
+pseudo-terminal. Son écran virtuel conserve couleurs, Unicode, curseur et
+écran alternatif. Un terminal d’au moins **61 colonnes et 16 lignes** est requis
+pour l’animation complète ; en dessous, le moteur utilise une image fixe.
+Le défilement natif du terminal ne donne pas accès à l’historique de l’écran
+virtuel : utilise la navigation du client IA.
+
+Une session déjà lancée sans ce lanceur ne peut pas être reprise à chaud.
+Cela concerne les **CLI dans un terminal**, pas la fenêtre graphique de Codex.
+MCP seul renvoie une image fixe ; il ne peut pas animer l’interface du client.
+Le serveur MCP garde stdout réservé au protocole.
+
+### Visualiseur séparé (facultatif)
 
 Dans un **volet terminal**, à côté de l’IA, lancer le visualiseur :
 
@@ -59,18 +126,27 @@ Le serveur enregistre la réaction dans un journal local et retourne aussi une
 image ASCII fixe dans le résultat MCP. Le succès confirme l’enregistrement, pas
 qu’un visualiseur est ouvert ou que l’utilisateur a entendu le son.
 
-Plusieurs IA peuvent alimenter le même visualiseur. Utiliser un seul visualiseur
-par journal pour éviter de doubler les sons. Utiliser la démo seule pour essayer,
-le visualiseur pour recevoir les appels des IA.
+Plusieurs IA peuvent alimenter le même journal. Utiliser un seul lanceur ou
+visualiseur par journal pour éviter les animations et sons en double. Ne lance
+pas `watch` en même temps que `ai`. Pour des sessions indépendantes, configure
+`AI_REACTIONS_LOG` avec le même chemin absolu dans le serveur et son lanceur.
 
 ## Outils
 
 | Outil | Demande à l’IA | Réaction |
 | --- | --- | --- |
-| `whip` | `fouette-le` | Fouet et claquement |
-| `whip_hard` | `coup de batte`, `mega clac`, `fouette-le fort` | Batte de baseball cartoon et impact en bois |
-| `encourage` | `encourage-le` | Robot souriant, étoiles et notes positives |
-| `reward` | `récompense-le` | Trophée, confettis, XP et son de victoire |
+| `whip` | `clac`, `fouette-le` | Fouet et claquement |
+| `whip_hard` | `bonk`, `coup de batte`, `mega clac`, `fouette-le fort` | Batte de baseball cartoon et impact en bois |
+| `encourage` | `bien joué`, `encourage-le` | Robot souriant, étoiles et notes positives |
+| `reward` | `gg`, `récompense-le` | Trophée, confettis, XP et son de victoire |
+| `too_slow` | `trop long`, `ça traîne` | Escargot, sablier et tic-tac d’horloge |
+| `chill` | `chill`, `tranquille`, `relax` | Lunettes de soleil, palmier et accord lo-fi |
+| `confused` | `wtf`, `hein ?` | Points d’interrogation et glissando « huh ? » |
+| `facepalm` | `bruh`, `sérieux ?` | Facepalm et trombone triste |
+| `hype` | `let's go`, `go go go` | Fusée, étincelles et fanfare montante |
+| `rip` | `rip`, `c’est mort` | Pierre tombale et orgue mélancolique |
+| `sus` | `susp`, `louche` | Regard suspicieux et notes de suspense |
+| `ez` | `ez`, `trop facile` | Victoire tranquille et « ding » |
 
 Tous acceptent `{ "intensity": 1 }`, avec un entier de **1 à 3**, défaut **1**.
 L’intensité change impacts, particules et durée (2,65 à 3,45 secondes). Le nom MCP
@@ -90,11 +166,19 @@ comportement, ajouter [`examples/agent-instructions.md`](examples/agent-instruct
 
 | Commande | Usage |
 | --- | --- |
+| `ai-reactions setup [client]` | Enregistre le serveur MCP dans codex, claude, gemini |
+| `ai-reactions codex` | Lance l’IA avec les animations (aussi `claude`, `gemini`) |
+| `ai-reactions intro` | Intro KK LAB : tigre et mots-clés |
+| `ai-reactions demo [réactions]` | Animations sans IA |
+| `ai-reactions watch` | Visualiseur séparé |
+| `ai-reactions serve` | Serveur MCP sur stdio |
+| `npm.cmd run ai -- codex` | Compile et lance Codex avec les animations dans le même terminal |
+| `npm.cmd run ai -- claude` | Même lanceur pour Claude Code configuré avec MCP |
 | `npm.cmd run dev` | Serveur MCP depuis TypeScript, support natif Node |
 | `npm.cmd run build` | Compilation dans `dist/` |
 | `npm.cmd start` | Serveur MCP compilé ; attend son client |
 | `npm.cmd test` | Build et tests du moteur, de MCP et du visualiseur |
-| `npm.cmd run demo` | Les quatre animations terminal, puis sortie automatique |
+| `npm.cmd run demo` | Les douze animations terminal, puis sortie automatique |
 | `npm.cmd run demo:terminal` | Alias de la même démo |
 | `npm.cmd run watch -- --seconds 300` | Anime les nouvelles réactions pendant cinq minutes |
 | `npm.cmd run reactions` | Affiche les 20 dernières entrées du journal |
@@ -171,13 +255,14 @@ l’environnement de validation ; sa configuration suit la documentation officie
 | --- | --- | --- |
 | `AI_REACTIONS_EFFECTS` | `terminal` | `terminal` : rendu CLI ; `text` : journal et messages seuls |
 | `AI_REACTIONS_SOUND` | `1` | `0` coupe le son, conserve les animations |
+| `AI_REACTIONS_INTRO` | `1` | `0` désactive l’intro du premier lancement |
 | `AI_REACTIONS_VOLUME` | `0.3` | Entre 0 et 1 ; ne modifie pas le volume Windows |
-| `AI_REACTIONS_LOG` | `.local/reactions.jsonl` | Chemin absolu du journal partagé |
+| `AI_REACTIONS_LOG` | `~/.ai-reactions/reactions.jsonl` | Chemin absolu du journal partagé |
 
 Le mode `windows` a été retiré : supprimer une ancienne variable définie à cette
 valeur ou la remplacer par `terminal`. Le helper PowerShell joue uniquement du
-son, console masquée, sans API de fenêtre. L’audio dépend de la sortie Windows ;
-les autres systèmes restent silencieux.
+son, console masquée, sans API de fenêtre. Sous macOS le son passe par `afplay`,
+sous Linux par `paplay` puis `aplay` ; un lecteur absent rend l’effet muet.
 
 Pour couper le son dans le terminal de la démo ou du visualiseur :
 
@@ -187,11 +272,12 @@ npm.cmd run demo
 Remove-Item Env:\AI_REACTIONS_SOUND
 ```
 
-Le journal se trouve dans **ce dépôt**, indépendamment du dossier de l’IA. Si
+Le journal se trouve dans `~/.ai-reactions/` (dossier utilisateur), indépendamment
+du dossier de l’IA et du dossier d’installation. Si
 `AI_REACTIONS_LOG` est personnalisé, utiliser le même chemin pour serveur et
 visualiseur. Les variables du serveur vont dans son objet MCP `env` (ou
 `[mcp_servers.ai-reactions.env]` pour Codex), celles du visualiseur dans son terminal.
-Le serveur ne transmet pas ses réglages audio au visualiseur.
+Le serveur ne transmet pas ses réglages audio au visualiseur ou au lanceur.
 
 Le journal contient uniquement les réactions, pas les conversations. Il s’accumule
 et peut être archivé entre sessions. Le lecteur utilise des blocs bornés, attend
@@ -222,7 +308,8 @@ npm run demo → client MCP → même moteur de rendu terminal
 | `src/terminal-animation.ts` | Animations ASCII et repli statique |
 | `src/terminal-output.ts` | Sortie par défaut et lecture audio |
 | `src/sound.ts`, `windows/audio.ps1` | Synthèse WAV originale et lecteur sans fenêtre |
-| `src/journal-reader.ts`, `scripts/watch.mjs` | Réception des événements et visualiseur |
+| `src/journal-reader.ts`, `scripts/watch.mjs` | Réception des événements et visualiseur séparé |
+| `src/session-terminal.ts`, `scripts/session.mjs` | Écran virtuel et lanceur de l’IA dans le terminal partagé |
 | `scripts/client.mjs`, `scripts/demo.mjs` | Démonstration avec client MCP officiel |
 
 stdout du serveur est réservé à MCP. stderr ne reçoit jamais de commandes de
@@ -232,18 +319,23 @@ uniquement ce helper, jamais le processus de l’IA.
 
 Pour ajouter une réaction, étendre registre, schéma du journal, rendu et son.
 Pour une autre sortie, implémenter `ReactionOutput.emit(event)`. SDK officiel
-MCP v2.1.0, Zod et TypeScript 6 ; aucune nouvelle dépendance npm native.
+MCP v2.1.0, Zod et TypeScript 6 ; `node-pty` et `@xterm/headless` pour le lanceur.
 Le verrouillage npm assure l’installation reproductible avec `npm ci`.
 
 ## Tests et dépannage
 
-Les tests vérifient les quatre outils MCP, toutes les intensités, les entrées
+Les tests vérifient les douze outils MCP, toutes les intensités, les entrées
 invalides, les erreurs et reprises, la concurrence, les WAV, le rendu dans un
 flux TTY contrôlé, le repli statique sans ANSI, les lignes partielles UTF-8/JSON,
 la rotation du journal et un visualiseur recevant les quatre appels MCP réels
-avant sa sortie normale. Aucun compte IA ou appel de modèle payant nécessaire.
+avant sa sortie normale. Le test du lanceur utilise un vrai pseudo-terminal,
+les quatre appels MCP et un client de test qui continue à écrire pendant les
+animations ; il vérifie la transmission d’entrée et la fermeture de la session.
+Aucun compte IA ou appel de modèle payant nécessaire aux tests.
 
-Runtime local vérifié : Node 24.14.0 sous Windows. Pour installer Node, prendre
+Runtime local vérifié : Node 24.14.0 sous Windows, installation globale
+depuis l’archive npm comprise. macOS et Linux suivent la même logique mais
+n’ont pas été testés sur machine réelle. Pour installer Node, prendre
 le dernier correctif de Node 24 LTS. Module manquant : `npm.cmd ci` puis
 `npm.cmd run build`. Image fixe : lancer directement dans un terminal assez
 grand, sans pipeline ni capture. Réaction MCP invisible : vérifier que le
@@ -252,8 +344,11 @@ réglages du visualiseur, le volume et la sortie audio Windows.
 
 ## Licence et sources
 
-Licence ISC conservée, voir [LICENSE](LICENSE). Dessins et sons originaux ; aucun
-code ou asset GoodClaude copié. Les dépendances gardent leurs licences.
+Code sous licence **MIT**, voir [LICENSE](LICENSE). **Exception** : le nom et le
+logo **KK LAB** et la mascotte tigre (y compris sa version pixel art dans
+`src/mascot.ts` et l’intro) restent © KKanisvaran, **tous droits réservés** ;
+toute autre utilisation demande une autorisation écrite. Sons et animations ASCII
+originaux. Les dépendances gardent leurs licences.
 
 - [Node.js : versions et support](https://nodejs.org/en/about/previous-releases)
 - [SDK MCP officiel](https://github.com/modelcontextprotocol/typescript-sdk)

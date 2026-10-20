@@ -43,6 +43,52 @@ export function synthesizeSound(name: ReactionName, intensity: number, volume: n
           }
         }
       }
+    } else if (name === 'too_slow') {
+      // Slow clock: alternating tick and tock.
+      for (let n = 0; n * 0.45 + 0.2 < t; n++) {
+        const u = t - (0.2 + n * 0.45);
+        if (u < 0.08) sample += Math.sin(2 * Math.PI * (n % 2 ? 1400 : 1900) * u) * Math.exp(-u * 70) * 0.5;
+      }
+    } else if (name === 'confused') {
+      // Rising "huh?" glide, one per intensity level.
+      for (let hit = 0; hit < intensity; hit++) {
+        const u = t - (0.3 + hit * 0.6);
+        if (u >= 0 && u < 0.45) {
+          const envelope = Math.min(1, u / 0.02) * Math.min(1, (0.45 - u) / 0.08);
+          sample += Math.sin(2 * Math.PI * (220 * u + 300 * u * u)) * envelope * 0.45;
+        }
+      }
+    } else if (name === 'sus') {
+      // Two low suspense notes, repeated by intensity.
+      for (let hit = 0; hit < intensity; hit++) {
+        for (const [offset, frequency] of [[0, 146.83], [0.32, 155.56]] as const) {
+          const u = t - (0.3 + hit * 0.75 + offset);
+          if (u >= 0 && u < 0.3) sample += (Math.sin(2 * Math.PI * frequency * u) + 0.4 * Math.sin(2 * Math.PI * frequency * 3 * u)) * Math.exp(-u * 6) * 0.4;
+        }
+      }
+    } else if (name === 'ez') {
+      // A bright "ding", one per intensity level.
+      for (let hit = 0; hit < intensity; hit++) {
+        const u = t - (0.4 + hit * 0.5);
+        if (u >= 0 && u < 1.2) sample += (Math.sin(2 * Math.PI * 1567.98 * u) + 0.3 * Math.sin(2 * Math.PI * 3135.96 * u)) * Math.exp(-u * 5) * 0.4;
+      }
+    } else if (name === 'chill' || name === 'facepalm' || name === 'hype' || name === 'rip') {
+      // Soft lo-fi Cmaj7, or a descending sad trombone with vibrato.
+      // hype: fast rising fanfare; rip: slow minor organ; both decay softly like chill.
+      const chill = name !== 'facepalm';
+      const notes = name === 'chill' ? [261.63, 329.63, 392, 493.88] : name === 'hype' ? [392, 523.25, 659.25, 783.99, 1046.5, 1318.51]
+        : name === 'rip' ? [220, 261.63, 329.63, 207.65] : [392, 369.99, 349.23, 293.66];
+      const step = name === 'hype' ? 0.12 : name === 'rip' ? 0.5 : chill ? 0.3 : 0.45;
+      for (let n = 0; n < notes.length; n++) {
+        const u = t - (0.25 + n * step);
+        const length = chill ? 2 : n === notes.length - 1 ? 1.1 : step;
+        if (u >= 0 && u < length) {
+          const vibrato = chill ? 0 : 0.004 * Math.sin(2 * Math.PI * 6 * u) * (n === notes.length - 1 ? 1 : 0);
+          const envelope = Math.min(1, u / 0.03) * (chill ? Math.exp(-u * 1.6) : Math.min(1, (length - u) / 0.05));
+          sample += (Math.sin(2 * Math.PI * notes[n]! * (1 + vibrato) * u) +
+            (chill ? 0 : 0.35 * Math.sin(2 * Math.PI * notes[n]! * 2 * u))) * envelope * 0.22;
+        }
+      }
     } else {
       const notes = name === 'reward' ? [523.25, 659.25, 783.99, 1046.5, 1318.51] : [523.25, 659.25, 783.99];
       for (let n = 0; n < notes.length; n++) {
