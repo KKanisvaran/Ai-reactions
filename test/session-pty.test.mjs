@@ -14,7 +14,7 @@ test('real PTY launcher renders four MCP animations, forwards input and exits wi
     process.execPath, fileURLToPath(new URL('./fixtures/session-ai.mjs', import.meta.url)),
   ], {
     windowsHide: true, stdio: ['ignore', 'pipe', 'pipe'],
-    env: { ...process.env, AI_REACTIONS_LOG: join(directory, 'events.jsonl'), AI_REACTIONS_SOUND: '0' },
+    env: { ...process.env, AI_REACTIONS_LOG: join(directory, 'events.jsonl'), AI_REACTIONS_SOUND: '0', AI_REACTIONS_INTRO: '0' },
   });
   let output = '', errors = '';
   const exited = once(child, 'close');

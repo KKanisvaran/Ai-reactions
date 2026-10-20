@@ -10,6 +10,8 @@ import { synthesizeSound } from './sound.ts';
 import { animateTerminal } from './terminal-animation.ts';
 import type { TerminalStream } from './terminal-animation.ts';
 
+type SoundEvent = Pick<ReactionEvent, 'reaction' | 'intensity'>;
+
 export interface EffectOptions {
   mode: 'terminal' | 'text';
   sound: boolean;
@@ -31,7 +33,7 @@ export function effectOptions(env: NodeJS.ProcessEnv = process.env, platform = p
 }
 
 /** Audio only: no WPF, GUI, console window, keyboard or focus API. */
-export function startWindowsSound(event: ReactionEvent, volume: number) {
+export function startWindowsSound(event: SoundEvent, volume: number) {
   const wav = synthesizeSound(event.reaction, event.intensity, volume);
   let resolveReady!: () => void;
   let rejectReady!: (error: Error) => void;
@@ -61,7 +63,7 @@ export function startWindowsSound(event: ReactionEvent, volume: number) {
 }
 
 /** macOS (afplay) and Linux (paplay, then aplay); a missing player only mutes the effect. */
-export function startUnixSound(event: ReactionEvent, volume: number, platform = process.platform) {
+export function startUnixSound(event: SoundEvent, volume: number, platform = process.platform) {
   const wav = synthesizeSound(event.reaction, event.intensity, volume);
   const file = join(tmpdir(), `ai-reactions-${randomUUID()}.wav`);
   const players = platform === 'darwin' ? [['afplay', file]] : [['paplay', file], ['aplay', '-q', file]];
@@ -78,10 +80,14 @@ export function startUnixSound(event: ReactionEvent, volume: number, platform = 
   return { ready, finished };
 }
 
+export function startSound(event: SoundEvent, volume: number) {
+  return process.platform === 'win32' ? startWindowsSound(event, volume) : startUnixSound(event, volume);
+}
+
 export async function playTerminalEffect(event: ReactionEvent, options = effectOptions(), stream: TerminalStream = process.stdout) {
   if (options.mode === 'text') return;
   if (!options.sound) return animateTerminal(event, stream);
-  const audio = process.platform === 'win32' ? startWindowsSound(event, options.volume) : startUnixSound(event, options.volume);
+  const audio = startSound(event, options.volume);
   await audio.ready;
   await Promise.all([animateTerminal(event, stream), audio.finished]);
 }

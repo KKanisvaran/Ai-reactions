@@ -23,6 +23,9 @@ ai-reactions codex        # lance Codex avec les animations (ou : ai-reactions c
 serveur pour l’utilisateur, donc dans tous les projets. S’il est déjà enregistré,
 lancer `codex mcp remove ai-reactions` (ou `claude` / `gemini`) puis relancer.
 
+À la fin de `setup` et au premier lancement, une intro **KK LAB** présente le
+tigre et les mots-clés à taper dans le chat. Pour la revoir : `ai-reactions intro`.
+
 Pour essayer sans IA : `ai-reactions demo` (ou `ai-reactions demo chill rip`).
 `ai-reactions --help` liste toutes les commandes. Désinstallation :
 `npm uninstall -g ai-reactions`.
@@ -158,6 +161,7 @@ comportement, ajouter [`examples/agent-instructions.md`](examples/agent-instruct
 | --- | --- |
 | `ai-reactions setup [client]` | Enregistre le serveur MCP dans codex, claude, gemini |
 | `ai-reactions codex` | Lance l’IA avec les animations (aussi `claude`, `gemini`) |
+| `ai-reactions intro` | Intro KK LAB : tigre et mots-clés |
 | `ai-reactions demo [réactions]` | Animations sans IA |
 | `ai-reactions watch` | Visualiseur séparé |
 | `ai-reactions serve` | Serveur MCP sur stdio |
@@ -244,6 +248,7 @@ l’environnement de validation ; sa configuration suit la documentation officie
 | --- | --- | --- |
 | `AI_REACTIONS_EFFECTS` | `terminal` | `terminal` : rendu CLI ; `text` : journal et messages seuls |
 | `AI_REACTIONS_SOUND` | `1` | `0` coupe le son, conserve les animations |
+| `AI_REACTIONS_INTRO` | `1` | `0` désactive l’intro du premier lancement |
 | `AI_REACTIONS_VOLUME` | `0.3` | Entre 0 et 1 ; ne modifie pas le volume Windows |
 | `AI_REACTIONS_LOG` | `~/.ai-reactions/reactions.jsonl` | Chemin absolu du journal partagé |
 

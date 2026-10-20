@@ -1,6 +1,9 @@
 import pty from 'node-pty';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { dirname } from 'node:path';
+import { playIntro } from '../dist/intro.js';
 import { JournalReader } from '../dist/journal-reader.js';
 import { reactionLogPath } from '../dist/local-output.js';
 import { effectOptions } from '../dist/terminal-output.js';
@@ -18,6 +21,12 @@ if (args[0] === '--help') {
   console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
   process.exitCode = 1;
 } else {
+  // First launch only: present KK LAB and the chat keywords.
+  const seen = join(dirname(reactionLogPath()), 'intro-seen');
+  if (process.env.AI_REACTIONS_INTRO !== '0' && !existsSync(seen)) {
+    await playIntro();
+    try { mkdirSync(dirname(seen), { recursive: true }); writeFileSync(seen, ''); } catch { /* Shown again next time. */ }
+  }
   await run(args.length ? args : ['codex']);
   // ConPTY can retain worker handles after onExit. The child has already
   // exited and the screen is restored; flush output before closing our host.
