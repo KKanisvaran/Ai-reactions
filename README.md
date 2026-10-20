@@ -14,10 +14,15 @@ injection de touches ou interruption du processus de l’IA.
 Prérequis : **Node.js 24** ou plus récent, et l’IA de ton choix déjà installée.
 
 ```sh
-npm install -g --allow-scripts=ai-reactions,node-pty github:KKanisvaran/Ai-reactions
+git clone https://github.com/KKanisvaran/Ai-reactions.git
+npm install -g --install-links --allow-scripts=node-pty ./Ai-reactions
 ai-reactions setup        # enregistre le serveur MCP dans codex, claude et gemini s’ils sont installés
 ai-reactions codex        # lance Codex avec les animations (ou : ai-reactions claude / gemini)
 ```
+
+Dépôt public, sans clone : `npm install -g --allow-scripts=node-pty
+https://github.com/KKanisvaran/Ai-reactions/archive/refs/heads/main.tar.gz`.
+Éviter `npm install -g github:…` : npm 11 échoue sur ce type d’installation globale.
 
 `setup` peut viser un seul client : `ai-reactions setup claude`. Il enregistre le
 serveur pour l’utilisateur, donc dans tous les projets. S’il est déjà enregistré,
