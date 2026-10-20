@@ -14,9 +14,11 @@ const WIDTH = 58;
 const HEIGHT = 11;
 const labels = { whip: 'FOUET / CLAC !', whip_hard: 'BATTE DE BASEBALL / BONK !',
   encourage: 'ENCOURAGEMENT / BRAVO !', reward: 'RECOMPENSE / LEVEL UP !',
-  too_slow: 'TROP LONG / ZZZ...', chill: 'CHILL / LO-FI', confused: 'WTF / HEIN ?', facepalm: 'BRUH / FACEPALM' };
-const particles: Record<string, string> = { too_slow: 'z', chill: '♪', confused: '?', facepalm: '.' };
-const faces: Record<string, string> = { too_slow: ' | u_u |', chill: ' | B-) |', confused: ' | o_O |', facepalm: ' | -_- |' };
+  too_slow: 'TROP LONG / ZZZ...', chill: 'CHILL / LO-FI', confused: 'WTF / HEIN ?', facepalm: 'BRUH / FACEPALM',
+  hype: 'HYPE / LET\'S GOOO !', rip: 'RIP / PAIX A SON CODE', sus: 'SUS / HMM...', ez: 'EZ / TROP FACILE' };
+const particles: Record<string, string> = { too_slow: 'z', chill: '♪', confused: '?', facepalm: '.', hype: '*', rip: '+', sus: '.', ez: '`' };
+const faces: Record<string, string> = { too_slow: ' | u_u |', chill: ' | B-) |', confused: ' | o_O |', facepalm: ' | -_- |',
+  hype: ' | ^o^ |', rip: ' | x_x |', sus: ' | ¬_¬ |', ez: ' | -u- |' };
 
 /** Frames belong to this CLI only; never write ANSI into the MCP protocol stream. */
 export function terminalFrame(event: FrameEvent, seconds: number): string {
@@ -78,6 +80,19 @@ export function terminalFrame(event: FrameEvent, seconds: number): string {
   } else if (event.reaction === 'facepalm') {
     put(x + 6, y + 2, '<m'); put(10, 5, 'wah... wah...');
     put(43, 6, 'BRUH.');
+  } else if (event.reaction === 'hype') {
+    const lift = Math.floor(seconds * 4) % 7;
+    put(10, 7 - lift, '/\\'); put(10, 8 - lift, '||'); put(10, 9 - lift, seconds * 8 % 2 < 1 ? '^^' : '**');
+    put(43, 6, 'LET\'S GO !');
+  } else if (event.reaction === 'rip') {
+    put(9, 3, ' .---.'); put(9, 4, '|     |'); put(9, 5, '| RIP |'); put(9, 6, '|     |'); put(8, 7, '\"\"\"\"\"\"\"\"\"');
+    put(43, 6, 'R.I.P.');
+  } else if (event.reaction === 'sus') {
+    put(10, 4, Math.floor(seconds * 2) % 2 ? '<-- ?' : '? -->'); put(10, 6, '...');
+    put(43, 6, 'SUS.');
+  } else if (event.reaction === 'ez') {
+    put(10, 4, 'GG EZ'); if (Math.floor(seconds * 3) % 2) put(9, 6, '*ding*');
+    put(43, 6, 'EZ.');
   } else {
     put(11, 4, '\\  |  /'); put(11, 5, '-- * --'); put(11, 6, '/  |  \\');
     put(43, 6, 'BRAVO !');

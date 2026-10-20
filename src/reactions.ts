@@ -47,6 +47,26 @@ export const reactionDefinitions = {
     description: 'Mot-clé exact « bruh » : facepalm désabusé avec trombone triste. À appeler aussi pour « sérieux ? », « facepalm » ou « oh non ».',
     messages: ['Bruh.', 'Sérieusement…', 'Facepalm niveau légendaire.'],
   },
+  hype: {
+    title: 'Hype',
+    description: 'Mot-clé exact « let\'s go » : hype, fusée et fanfare montante. À appeler aussi pour « letsgo », « go go go » ou « hype ».',
+    messages: ['Let’s go !', 'LET’S GOOO !', 'LET’S GOOOOOOO ! Fusée lancée !'],
+  },
+  rip: {
+    title: 'RIP',
+    description: 'Mot-clé exact « rip » : petite pierre tombale cartoon et orgue mélancolique, pour un bug ou une idée ratée. À appeler aussi pour « paix à son âme » ou « c’est mort ».',
+    messages: ['RIP.', 'Paix à ce code.', 'Ci-gît ta dernière idée. Elle était jeune.'],
+  },
+  sus: {
+    title: 'Suspect',
+    description: 'Mot-clé exact « sus » : regard suspicieux à gauche et à droite, avec deux notes graves de suspense. À appeler aussi pour « louche », « suspect » ou « hmm ».',
+    messages: ['Hmm… louche.', 'Très suspect, tout ça.', 'Je t’ai à l’œil. Les deux yeux, même.'],
+  },
+  ez: {
+    title: 'EZ',
+    description: 'Mot-clé exact « ez » : victoire trop facile, sourire tranquille et petit « ding ». À appeler aussi pour « easy », « trop facile » ou « fastoche ».',
+    messages: ['EZ.', 'Trop facile.', 'Même pas transpiré. EZ GG.'],
+  },
 } as const;
 
 export type ReactionName = keyof typeof reactionDefinitions;

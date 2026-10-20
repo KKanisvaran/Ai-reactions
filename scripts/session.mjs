@@ -9,11 +9,13 @@ import { SessionTerminal } from '../dist/session-terminal.js';
 const args = process.argv.slice(2);
 if (args[0] === '--') args.shift();
 if (args[0] === '--help') {
-  console.log('Usage : npm run ai -- codex [arguments] (ou claude, gemini)\n'
-    + 'Dans le chat : ko1 = fouet ; ko2 = batte ; gret job = encouragement ; great job dude = récompense.\n'
+  console.log('Usage : ai-reactions codex [arguments] (ou claude, gemini)\n'
+    + 'Dans le chat : ko1 = fouet ; ko2 = batte ; gret job = encouragement ; great job dude = récompense ;\n'
+    + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
+    + 'let\'s go = hype ; rip = pierre tombale ; sus = suspect ; ez = trop facile.\n'
     + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.');
 } else if (!process.stdin.isTTY || !process.stdout.isTTY) {
-  console.error('Lancez npm.cmd run ai -- codex directement dans un terminal interactif (sans capture ni pipeline).');
+  console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
   process.exitCode = 1;
 } else {
   await run(args.length ? args : ['codex']);

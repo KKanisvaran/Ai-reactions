@@ -5,7 +5,7 @@ let session;
 try {
   const args = process.argv.slice(2);
   const names = args.filter((arg) => arg !== '--terminal');
-  const available = ['whip', 'encourage', 'whip_hard', 'reward', 'too_slow', 'chill', 'confused', 'facepalm'];
+  const available = ['whip', 'encourage', 'whip_hard', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez'];
   if (names.some((name) => !available.includes(name))) throw new Error('Réaction inconnue. Utilisez ' + available.join(', ') + '.');
   const options = effectOptions();
   session = await connect({ effects: 'text' });
