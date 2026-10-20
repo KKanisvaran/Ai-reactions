@@ -24,7 +24,7 @@ test('real stdio SDK client discovers tools, calls all intensities and rejects b
   const { client, errors, diagnostics, logPath } = await fixture(t);
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((tool) => tool.name).sort(), ['chill', 'confused', 'encourage', 'ez', 'facepalm', 'hype', 'reward', 'rip', 'sus', 'too_slow', 'whip', 'whip_hard']);
-  for (const [name, keyword] of Object.entries({ whip: 'ko1', whip_hard: 'ko2', encourage: 'gret job', reward: 'great job dude', too_slow: 'trop long', chill: 'chill', confused: 'wtf', facepalm: 'bruh', hype: 'let\'s go', rip: 'rip', sus: 'sus', ez: 'ez' })) {
+  for (const [name, keyword] of Object.entries({ whip: 'ko1', whip_hard: 'ko2', encourage: 'gret job', reward: 'great job dude', too_slow: 'trop long', chill: 'chill', confused: 'wtf', facepalm: 'bruh', hype: 'let\'s go', rip: 'rip', sus: 'susp', ez: 'ez' })) {
     assert.ok(tools.find((tool) => tool.name === name).description.includes(`« ${keyword} »`));
   }
   for (const tool of tools) {

@@ -15,7 +15,7 @@ Quand un message demande une réaction, appelle un seul outil MCP du serveur
 | `bruh` | `facepalm` | Facepalm |
 | `let's go` | `hype` | Hype, fusée |
 | `rip` | `rip` | Pierre tombale |
-| `sus` | `sus` | Suspicion |
+| `susp` | `sus` | Suspense |
 | `ez` | `ez` | Victoire facile |
 
 `gret job` est volontaire. `great job dude` est une récompense, jamais un

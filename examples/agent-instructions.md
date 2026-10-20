@@ -9,7 +9,7 @@ Mots-clés de réaction (un seul outil par demande, intensité 1 par défaut) :
 - `bruh` → `facepalm`.
 - `let's go` → `hype`.
 - `rip` → `rip` (pierre tombale).
-- `sus` → `sus` (suspicion).
+- `susp` → `sus` (suspense).
 - `ez` → `ez` (victoire facile).
 
 Quand je demande « fouette-le », appelle l’outil MCP `whip` du serveur

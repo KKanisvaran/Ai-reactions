@@ -59,7 +59,7 @@ export const reactionDefinitions = {
   },
   sus: {
     title: 'Suspect',
-    description: 'Mot-clé exact « sus » : regard suspicieux à gauche et à droite, avec deux notes graves de suspense. À appeler aussi pour « louche », « suspect » ou « hmm ».',
+    description: 'Mot-clé exact « susp » (suspense) : regard suspicieux à gauche et à droite, avec deux notes graves de suspense. À appeler aussi pour « louche », « suspect » ou « hmm ».',
     messages: ['Hmm… louche.', 'Très suspect, tout ça.', 'Je t’ai à l’œil. Les deux yeux, même.'],
   },
   ez: {

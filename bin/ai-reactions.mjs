@@ -24,7 +24,7 @@ Usage :
   ai-reactions --version
 
 Dans le chat : ko1, ko2, gret job, great job dude, trop long, chill, wtf, bruh,
-let's go, rip, sus, ez.`;
+let's go, rip, susp, ez.`;
 
 // Each client registers the same stdio server, globally for the user.
 const registrations = {

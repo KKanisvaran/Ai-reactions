@@ -75,7 +75,7 @@ Puis envoie un de ces messages dans le chat :
 | `bruh` | Facepalm et trombone triste |
 | `let's go` | Fusée qui décolle et fanfare montante |
 | `rip` | Pierre tombale cartoon et orgue mélancolique |
-| `sus` | Regard suspicieux et deux notes graves |
+| `susp` | Suspense : regard suspicieux et deux notes graves |
 | `ez` | Victoire trop facile et petit « ding » |
 
 L’IA appelle l’outil MCP correspondant. L’animation complète et son son sont
@@ -135,7 +135,7 @@ pas `watch` en même temps que `ai`. Pour des sessions indépendantes, configure
 | `facepalm` | `bruh`, `sérieux ?` | Facepalm et trombone triste |
 | `hype` | `let's go`, `go go go` | Fusée, étincelles et fanfare montante |
 | `rip` | `rip`, `c’est mort` | Pierre tombale et orgue mélancolique |
-| `sus` | `sus`, `louche` | Regard suspicieux et notes de suspense |
+| `sus` | `susp`, `louche` | Regard suspicieux et notes de suspense |
 | `ez` | `ez`, `trop facile` | Victoire tranquille et « ding » |
 
 Tous acceptent `{ "intensity": 1 }`, avec un entier de **1 à 3**, défaut **1**.

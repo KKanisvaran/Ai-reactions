@@ -12,7 +12,7 @@ if (args[0] === '--help') {
   console.log('Usage : ai-reactions codex [arguments] (ou claude, gemini)\n'
     + 'Dans le chat : ko1 = fouet ; ko2 = batte ; gret job = encouragement ; great job dude = récompense ;\n'
     + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
-    + 'let\'s go = hype ; rip = pierre tombale ; sus = suspect ; ez = trop facile.\n'
+    + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.\n'
     + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.');
 } else if (!process.stdin.isTTY || !process.stdout.isTTY) {
   console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
