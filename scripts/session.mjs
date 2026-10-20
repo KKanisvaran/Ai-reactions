@@ -8,6 +8,7 @@ import { JournalReader } from '../dist/journal-reader.js';
 import { reactionLogPath } from '../dist/local-output.js';
 import { effectOptions } from '../dist/terminal-output.js';
 import { SessionTerminal } from '../dist/session-terminal.js';
+import { ensureSpawnHelper } from './pty-helper.mjs';
 
 const args = process.argv.slice(2);
 if (args[0] === '--') args.shift();
@@ -52,6 +53,7 @@ async function run(command) {
       executable = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
       arguments_ = ['-NoLogo', '-NoProfile', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')];
     }
+    ensureSpawnHelper();
     child = pty.spawn(executable, arguments_, {
       name: 'xterm-256color', cols: process.stdout.columns, rows: process.stdout.rows,
       useConptyDll: true,

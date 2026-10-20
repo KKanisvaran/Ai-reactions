@@ -1,9 +1,11 @@
 import pty from 'node-pty';
 import xterm from '@xterm/headless';
 import { fileURLToPath } from 'node:url';
+import { ensureSpawnHelper } from '../../scripts/pty-helper.mjs';
 
 // Isolate ConPTY's worker handles in their own host, like the real launcher.
 const terminal = new xterm.Terminal({ cols: 80, rows: 24, allowProposedApi: true });
+ensureSpawnHelper();
 const child = pty.spawn(process.execPath, [
   fileURLToPath(new URL('../../scripts/session.mjs', import.meta.url)),
   ...process.argv.slice(2),
