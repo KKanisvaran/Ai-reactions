@@ -48,7 +48,9 @@ npm.cmd run demo
 npm.cmd run ai -- codex
 ```
 
-`npm link` installe la commande `ai-reactions` depuis ta copie locale.
+`npm link` installe la commande `ai-reactions` depuis ta copie locale. `dist/` est
+versionné pour que l’installation depuis GitHub n’ait rien à compiler : après une
+modification de `src/`, lancer `npm.cmd run build` et commiter `dist/` avec.
 
 Le terminal doit être interactif et mesurer au moins **61 colonnes et 16 lignes**.
 Une sortie capturée par une IA, un fichier ou un pipeline reçoit une image fixe
