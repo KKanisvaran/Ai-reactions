@@ -29,7 +29,7 @@ test('journal viewer skips history and preserves partial UTF-8 lines across read
   await appendFile(path, bytes.subarray(split));
   assert.deepEqual(await reader.next(), [next]);
   assert.deepEqual(await reader.next(), []);
-  await appendFile(path, `garbage\n${JSON.stringify({ ...event(), intensity: 4 })}\n${JSON.stringify({ ...event(), message: '\x1b[2J' })}\n`);
+  await appendFile(path, `garbage\n${JSON.stringify({ ...event(), intensity: 4 })}\n${JSON.stringify({ ...event(), message: '\x1b[2J' })}\n${JSON.stringify({ ...event(), message: '\u009b2J' })}\n`);
   assert.deepEqual(await reader.next(), []);
   await rename(path, join(directory, 'old.jsonl'));
   const rotated = event('whip');

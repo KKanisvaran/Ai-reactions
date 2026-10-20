@@ -46,7 +46,8 @@ async function run(command) {
       if (['codex', 'gemini', 'npm', 'npx'].includes(executable)) executable += '.cmd';
       // PowerShell resolves npm .cmd shims as well as native executables.
       // Every user argument is a single-quoted literal, never executable code.
-      const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+      // PowerShell also closes single quotes on typographic quotes: double them all.
+      const quote = (value) => `'${value.replace(/['‘’‚‛]/g, '$&$&')}'`;
       const script = `$ErrorActionPreference = 'Stop'; try { & ${quote(executable)} ${arguments_.map(quote).join(' ')}; if ($null -ne $LASTEXITCODE) { exit $LASTEXITCODE } } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }`;
       executable = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
       arguments_ = ['-NoLogo', '-NoProfile', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')];

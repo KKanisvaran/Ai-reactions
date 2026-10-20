@@ -1,0 +1,31 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - run: npm test
+        env:
+          AI_REACTIONS_SOUND: '0'
+      - name: dist/ matches src/
+        shell: bash
+        run: git diff --exit-code -- dist/ || (echo "Run npm run build and commit dist/." && exit 1)
+      - run: npm audit --audit-level=high
