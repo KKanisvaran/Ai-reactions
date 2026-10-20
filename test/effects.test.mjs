@@ -18,7 +18,7 @@ test('all effects use the terminal by default, with strict environment settings'
 
 test('all sounds are original non-silent, bounded PCM WAVs, scaled by volume', () => {
   const fingerprints = new Set();
-  for (const name of ['whip', 'whip_hard', 'encourage', 'reward']) {
+  for (const name of ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm']) {
     for (const intensity of [1, 2, 3]) {
       const wav = synthesizeSound(name, intensity, 0.3);
       assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
@@ -35,7 +35,7 @@ test('all sounds are original non-silent, bounded PCM WAVs, scaled by volume', (
       assert.ok(synthesizeSound(name, intensity, 0).subarray(44).every((byte) => byte === 0));
     }
   }
-  assert.equal(fingerprints.size, 12);
+  assert.equal(fingerprints.size, 24);
   assert.throws(() => synthesizeSound('whip', 4, 0.3));
 });
 

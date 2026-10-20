@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { animateTerminal, terminalFrame } from '../scripts/terminal-animation.mjs';
 
 test('terminal renderer gives each reaction distinct frames within its own fixed block', () => {
-  const events = ['whip', 'whip_hard', 'encourage', 'reward'].map((reaction) => ({ reaction, intensity: 2 }));
+  const events = ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm'].map((reaction) => ({ reaction, intensity: 2 }));
   const unique = new Set();
   for (const event of events) {
     const early = terminalFrame(event, 0.4);
@@ -14,7 +14,7 @@ test('terminal renderer gives each reaction distinct frames within its own fixed
     assert.doesNotMatch(early, /\x1b/);
     unique.add(impact);
   }
-  assert.equal(unique.size, 4);
+  assert.equal(unique.size, 8);
   assert.match(terminalFrame(events[1], 0.6), /BATTE DE BASEBALL/);
   assert.match(terminalFrame(events[1], 0.6), /BONK/);
   assert.match(terminalFrame(events[2], 0.6), /\^_\^/);

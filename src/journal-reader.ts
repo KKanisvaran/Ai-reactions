@@ -1,10 +1,11 @@
 import { open } from 'node:fs/promises';
 import { z } from 'zod';
-import type { ReactionEvent } from './reactions.ts';
+import { reactionDefinitions } from './reactions.ts';
+import type { ReactionEvent, ReactionName } from './reactions.ts';
 
 const eventSchema = z.object({
   id: z.string().uuid(), timestamp: z.string().datetime(),
-  reaction: z.enum(['whip', 'whip_hard', 'encourage', 'reward']),
+  reaction: z.enum(Object.keys(reactionDefinitions) as [ReactionName, ...ReactionName[]]),
   intensity: z.number().int().min(1).max(3),
   message: z.string().max(300).regex(/^[^\u0000-\u001f\u007f]*$/),
 });

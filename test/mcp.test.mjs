@@ -23,7 +23,10 @@ async function fixture(t, options = {}) {
 test('real stdio SDK client discovers tools, calls all intensities and rejects bad input', { timeout: 20000 }, async (t) => {
   const { client, errors, diagnostics, logPath } = await fixture(t);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((tool) => tool.name).sort(), ['encourage', 'reward', 'whip', 'whip_hard']);
+  assert.deepEqual(tools.map((tool) => tool.name).sort(), ['chill', 'confused', 'encourage', 'facepalm', 'reward', 'too_slow', 'whip', 'whip_hard']);
+  for (const [name, keyword] of Object.entries({ whip: 'ko1', whip_hard: 'ko2', encourage: 'gret job', reward: 'great job dude', too_slow: 'trop long', chill: 'chill', confused: 'wtf', facepalm: 'bruh' })) {
+    assert.ok(tools.find((tool) => tool.name === name).description.includes(`« ${keyword} »`));
+  }
   for (const tool of tools) {
     assert.equal(tool.inputSchema.additionalProperties, false);
     assert.equal(tool.inputSchema.properties.intensity.minimum, 1);
@@ -31,7 +34,7 @@ test('real stdio SDK client discovers tools, calls all intensities and rejects b
     assert.equal(tool.annotations.readOnlyHint, false);
     assert.equal(tool.annotations.openWorldHint, false);
   }
-  for (const name of ['whip', 'encourage', 'whip_hard', 'reward']) {
+  for (const name of ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm']) {
     for (const intensity of [1, 2, 3]) {
       const result = await client.callTool({ name, arguments: { intensity } });
       assert.notEqual(result.isError, true);
@@ -48,8 +51,8 @@ test('real stdio SDK client discovers tools, calls all intensities and rejects b
   const defaultResult = await client.callTool({ name: 'whip', arguments: {} });
   assert.equal(defaultResult.structuredContent.intensity, 1);
   const events = (await readFile(logPath, 'utf8')).trim().split('\n').map(JSON.parse);
-  assert.equal(events.length, 13, 'invalid calls must have no local effect');
-  assert.equal(new Set(events.map((event) => event.id)).size, 13);
+  assert.equal(events.length, 25, 'invalid calls must have no local effect');
+  assert.equal(new Set(events.map((event) => event.id)).size, 25);
   await client.ping();
   assert.deepEqual(errors, [], 'stdout must contain only valid MCP messages');
   assert.match(diagnostics.join(''), /WHIP 3\/3/);

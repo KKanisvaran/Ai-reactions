@@ -74,7 +74,7 @@ export class TerminalOutput implements ReactionOutput {
   constructor(_options = effectOptions(), local: ReactionOutput = new LocalOutput(),
     run: (event: ReactionEvent) => Promise<unknown> = async (event) => {
       // The host owns its TUI even when stderr is a TTY: never move its cursor.
-      diagnostic(`Réaction ${event.reaction} disponible pour le visualiseur : npm run watch.`);
+      diagnostic(`Réaction ${event.reaction} disponible dans le terminal du lanceur : npm run ai -- codex (ou visualiseur séparé : npm run watch).`);
     }) {
     this.local = local; this.run = run;
   }
