@@ -20,7 +20,7 @@ test('all effects use the terminal by default, with strict environment settings'
 
 test('all sounds are original non-silent, bounded PCM WAVs, scaled by volume', () => {
   const fingerprints = new Set();
-  for (const name of ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
+  for (const name of ['boop', 'coffee', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
     for (const intensity of [1, 2, 3]) {
       const wav = synthesizeSound(name, intensity, 0.3);
       assert.equal(wav.toString('ascii', 0, 4), 'RIFF');
@@ -38,7 +38,7 @@ test('all sounds are original non-silent, bounded PCM WAVs, scaled by volume', (
     }
   }
   assert.equal(fingerprints.size, 36);
-  assert.throws(() => synthesizeSound('whip', 4, 0.3));
+  assert.throws(() => synthesizeSound('boop', 4, 0.3));
 });
 
 test('animation queue bounds work, serializes calls and recovers after failure', async () => {
@@ -47,7 +47,7 @@ test('animation queue bounds work, serializes calls and recovers after failure',
   const output = new TerminalOutput(effectOptions({}, 'win32'), {
     emit: async (event) => { seen.push(event.id); },
   }, () => new Promise((resolve, reject) => { releases.push({ resolve, reject }); }));
-  const event = (id) => ({ id, reaction: 'whip', intensity: 1, timestamp: '', message: '' });
+  const event = (id) => ({ id, reaction: 'boop', intensity: 1, timestamp: '', message: '' });
   const first = output.emit(event('one'));
   const failure = assert.rejects(first, /renderer unavailable/);
   const rest = ['two', 'three', 'four'].map((id) => output.emit(event(id)));

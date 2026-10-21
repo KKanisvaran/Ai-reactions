@@ -6,7 +6,7 @@ import { reactionLogPath } from '../dist/local-output.js';
 test('engine validates before emitting and varies each reaction by intensity', async () => {
   const events = [];
   const engine = new ReactionEngine({ emit: async (event) => { events.push(event); } });
-  for (const name of ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
+  for (const name of ['boop', 'coffee', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
     const messages = new Set();
     for (const intensity of [1, 2, 3]) {
       const event = await engine.react(name, { intensity });
@@ -20,7 +20,7 @@ test('engine validates before emitting and varies each reaction by intensity', a
   for (const input of [{ intensity: 0 }, { intensity: 4 }, { intensity: 1.5 },
     { intensity: '2' }, { intensity: null }, { intensity: true },
     { intensity: NaN }, { intensity: Infinity }, { extra: 'no' }, null]) {
-    await assert.rejects(engine.react('whip', input));
+    await assert.rejects(engine.react('boop', input));
   }
   await assert.rejects(engine.react('constructor', {}));
   assert.equal(events.length, 36);
@@ -29,7 +29,7 @@ test('engine validates before emitting and varies each reaction by intensity', a
 
 test('engine propagates output failure, without falsely reporting success', async () => {
   const engine = new ReactionEngine({ emit: async () => { throw new Error('disk failed'); } });
-  await assert.rejects(engine.react('whip', {}), /disk failed/);
+  await assert.rejects(engine.react('boop', {}), /disk failed/);
 });
 
 test('log path is independent of cwd and rejects relative overrides', () => {

@@ -1,25 +1,28 @@
 # ai-reactions · KK LAB
 
-**Réagis à ton IA, directement dans son terminal.** Tape `gg`, `bonk` ou `trop long`
+**Réagis à ton IA, directement dans son terminal.** Tape `gg`, `boop` ou `trop long`
 dans le chat de Codex, Claude Code ou Gemini CLI : l’IA déclenche une animation
 ASCII avec son, dans le même terminal, puis reprend son travail là où elle en était.
+
+> **Projet 100 % pour le fun.** Ça ne sert à rien, c’est un peu débile, et c’est
+> exactement le but : rendre le code avec une IA un peu plus drôle.
 
 ![Intro KK LAB : le tigre et les mots-clés](docs/kk-lab-intro.png)
 
 ```text
 +----------------------------------------------------------+
-| BATTE DE BASEBALL / BONK !  [2/3]                        |
-|                                  o      * BONK! *        |
-|                            *  .-----.                    |
-|         o==/////====[=======) | >.< |                    |
+| BOOP / SUR LE NEZ !  [2/3]                               |
+|                             ♥    o    ♥ * BOOP! *        |
+|                      _____    .-----.                    |
+|                     (_____)--o| >w< |                    |
 |                               +-----+                    |
-|                              /| AI |\                    |
+|                              \| AI |/                    |
 |                                /   \                     |
-| ==============================================           |
+| ============================================             |
 +----------------------------------------------------------+
 ```
 
-- **12 réactions**, des plus punitives aux plus chill, chacune en 3 intensités.
+- **12 réactions**, du `boop` sur le nez au `chill` lo-fi, chacune en 3 intensités.
 - **Sons synthétisés à la volée** : aucun fichier audio, rien de téléchargé.
 - **Dans le terminal de l’IA**, sans fenêtre ni overlay. L’écran de l’IA est
   restauré après l’effet.
@@ -54,8 +57,8 @@ Demande « intensité 2 » ou « intensité 3 » pour un effet plus long et plus
 
 | Mot-clé | Effet | Son |
 | --- | --- | --- |
-| `clac` | Coup de fouet | Claquement |
-| `bonk` | Coup de batte de baseball cartoon | Impact en bois |
+| `boop` | Petit boop sur le nez de l’IA, cœurs | « Boop » mignon |
+| `café` | Pause café, l’IA se réveille d’un coup | Gorgée puis arpège plein d’énergie |
 | `bien joué` | Encouragement, étoiles | Arpège positif |
 | `gg` | Trophée et XP | Fanfare de victoire |
 | `trop long` | Escargot, sablier, l’IA somnole | Tic-tac d’horloge |
@@ -79,7 +82,7 @@ un mur de texte.
 
 En septembre 2026, j’ai voulu rendre ces moments **visibles et drôles** sans
 casser le flux de travail. La première version tenait en quatre réactions,
-punitions et encouragements, jouées dans une fenêtre à part. Deux contraintes
+taquineries et encouragements, jouées dans une fenêtre à part. Deux contraintes
 ont façonné la suite :
 
 1. **Rester dans le terminal de l’IA.** Le protocole MCP permet à l’IA d’appeler
@@ -96,15 +99,24 @@ l’identité **KK LAB** et son tigre.
 ## Comment ça marche
 
 ```text
- Toi : « gg »
+  toi
+   │  « gg »
+   ▼
+  l’IA (Codex, Claude, Gemini)
+   │  « oh, merci ! » et appelle l’outil MCP reward
+   ▼
+  serveur ai-reactions
+   │  note la réaction dans son carnet (~/.ai-reactions/*.jsonl)
+   ▼
+  lanceur ai-reactions
+   │  voit la note et joue l’anim par-dessus l’écran de l’IA
+   ▼
+  ╭──────────────────────╮
+  │  \o/  +XP  ta-da-da! │   ♪ fanfare
+  ╰──────────────────────╯
    │
    ▼
- IA (Codex / Claude / Gemini) ── appel d’outil MCP « reward » ──▶ serveur ai-reactions
-                                                                    │ valide (Zod)
-                                                                    ▼
-                                                     journal ~/.ai-reactions/*.jsonl
-                                                                    │
- Terminal ◀── animation + son ◀── lanceur ai-reactions (pseudo-terminal + écran virtuel)
+  l’IA reprend son taf, tranquille ~
 ```
 
 - **Serveur MCP** (`src/server.ts`, `src/reactions.ts`) : expose 12 outils sur

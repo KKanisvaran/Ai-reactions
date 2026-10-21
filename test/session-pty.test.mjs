@@ -27,7 +27,7 @@ test('real PTY launcher renders four MCP animations, forwards input and exits wi
   const [exitCode] = await exited;
   assert.equal(exitCode, 0, errors + output.slice(-3000));
   assert.match(output, /SESSION_READY/, 'the child runs interactively');
-  for (const label of ['FOUET / CLAC', 'BATTE DE BASEBALL', 'ENCOURAGEMENT / BRAVO', 'RECOMPENSE / LEVEL UP']) {
+  for (const label of ['BOOP / SUR LE NEZ', 'CAFE / PETIT ESPRESSO', 'ENCOURAGEMENT / BRAVO', 'RECOMPENSE / LEVEL UP']) {
     assert.ok(output.split(label).length > 10, `multiple animated frames for ${label}`);
   }
   assert.match(output, /SESSION_DONE/);

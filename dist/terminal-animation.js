@@ -2,12 +2,12 @@ import { setTimeout as delay } from 'node:timers/promises';
 import { effectDuration } from "./sound.js";
 const WIDTH = 58;
 const HEIGHT = 11;
-const labels = { whip: 'FOUET / CLAC !', whip_hard: 'BATTE DE BASEBALL / BONK !',
+const labels = { boop: 'BOOP / SUR LE NEZ !', coffee: 'CAFE / PETIT ESPRESSO !',
     encourage: 'ENCOURAGEMENT / BRAVO !', reward: 'RECOMPENSE / LEVEL UP !',
     too_slow: 'TROP LONG / ZZZ...', chill: 'CHILL / LO-FI', confused: 'WTF / HEIN ?', facepalm: 'BRUH / FACEPALM',
     hype: 'HYPE / LET\'S GOOO !', rip: 'RIP / PAIX A SON CODE', sus: 'SUS / HMM...', ez: 'EZ / TROP FACILE' };
-const particles = { too_slow: 'z', chill: '♪', confused: '?', facepalm: '.', hype: '*', rip: '+', sus: '.', ez: '`' };
-const faces = { too_slow: ' | u_u |', chill: ' | B-) |', confused: ' | o_O |', facepalm: ' | -_- |',
+const particles = { coffee: '*', too_slow: 'z', chill: '♪', confused: '?', facepalm: '.', hype: '*', rip: '+', sus: '.', ez: '`' };
+const faces = { coffee: ' | O_O |', too_slow: ' | u_u |', chill: ' | B-) |', confused: ' | o_O |', facepalm: ' | -_- |',
     hype: ' | ^o^ |', rip: ' | x_x |', sus: ' | ¬_¬ |', ez: ' | -u- |' };
 /** Frames belong to this CLI only; never write ANSI into the MCP protocol stream. */
 export function terminalFrame(event, seconds) {
@@ -22,47 +22,51 @@ export function terminalFrame(event, seconds) {
                 grid[y][x + i] = char;
         }
     }
-    const striking = event.reaction === 'whip' || event.reaction === 'whip_hard';
-    let impact = false;
-    let winding = false;
-    for (let hit = 0; hit < event.intensity; hit++) {
+    const boop = event.reaction === 'boop';
+    let contact = false;
+    let reach = 0;
+    for (let hit = 0; boop && hit < event.intensity; hit++) {
         const local = seconds - (0.55 + hit * 0.5);
-        impact ||= striking && local >= 0 && local < 0.22;
-        winding ||= local >= -0.24 && local < 0;
+        contact ||= local >= 0 && local < 0.22;
+        if (local >= -0.24 && local < 0)
+            reach = (local + 0.24) / 0.24;
     }
-    if (!striking) {
+    // Coffee: sleepy until the sip, then full of energy.
+    const awake = event.reaction !== 'coffee' || seconds >= 1.05;
+    const lively = !boop && awake;
+    if (lively) {
         for (let i = 0; i < 8 + event.intensity * 4; i++) {
             put(3 + i * 13 % 52, 2 + Math.floor(seconds * 4 + i * 3.7) % 7, particles[event.reaction] ?? (i % 3 ? '+' : '*'));
         }
     }
     put(1, 0, `${labels[event.reaction]}  [${event.intensity}/3]`);
-    const x = 30 + (impact ? Math.floor(seconds * 30) % 2 : 0);
-    const y = !striking && Math.sin(seconds * 6) > 0 ? 2 : 3;
+    const x = 30;
+    const y = lively && Math.sin(seconds * 6) > 0 ? 2 : 3;
     put(x, y, '    o    ');
     put(x, y + 1, ' .-----.');
-    put(x, y + 2, impact ? ' | >.< |' : striking ? ' | o_o |' : faces[event.reaction] ?? ' | ^_^ |');
+    put(x, y + 2, boop ? (contact ? ' | >w< |' : ' | o.o |') : awake ? faces[event.reaction] ?? ' | ^_^ |' : ' | -_- |');
     put(x, y + 3, ' +-----+');
-    put(x, y + 4, !striking ? '\\| AI |/' : '/| AI |\\');
+    put(x, y + 4, lively || contact ? '\\| AI |/' : '/| AI |\\');
     put(x, y + 5, '  /   \\');
-    if (event.reaction === 'whip_hard') {
-        if (winding) {
-            put(19, 2, '/===)');
-            put(17, 3, '//');
-            put(15, 4, '//');
-            put(13, 5, 'o/');
-        }
-        else {
-            put(9, 5, 'o==/////====[=======)');
-        }
-        if (impact) {
-            put(41, 3, '* BONK! *');
-            put(28, 4, '*');
+    if (boop) {
+        // A finger slides in and taps the nose, then rests between boops.
+        const tip = contact ? x : 16 + Math.round(reach * 13);
+        put(tip - 9, y + 1, ' _____');
+        put(tip - 9, y + 2, '(_____)--o');
+        if (contact) {
+            put(41, 3, '* BOOP! *');
+            put(x - 1, y, '♥');
+            put(x + 9, y, '♥');
         }
     }
-    else if (event.reaction === 'whip') {
-        put(8, 5, winding ? 'o==)~~\\__' : 'o==)~~~~~----~>');
-        if (impact)
-            put(41, 3, '* CLAC! *');
+    else if (event.reaction === 'coffee') {
+        const puff = Math.floor(seconds * 3) % 2;
+        put(11, 2, puff ? '( (' : ') )');
+        put(11, 3, puff ? ') )' : '( (');
+        put(9, 4, '.------.');
+        put(9, 5, '|      |]');
+        put(9, 6, '\\______/');
+        put(43, 6, awake ? `BOOST x${event.intensity}` : 'SLURP...');
     }
     else if (event.reaction === 'reward') {
         put(10, 3, '\\===/');

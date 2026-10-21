@@ -15,9 +15,9 @@ test('intro lists one keyword per reaction, with the KK LAB tiger when the termi
   }
   const compact = introFrame(5, 60, 22).map(plain);
   assert.ok(!compact.some((line) => line.includes('▀')));
-  assert.ok(compact.some((line) => line.includes('clac')));
+  assert.ok(compact.some((line) => line.includes('boop')));
   // The reveal is animated: nothing but the tiger's first lines at the start.
-  assert.ok(!introFrame(0.2).map(plain).some((line) => line.includes('clac')));
+  assert.ok(!introFrame(0.2).map(plain).some((line) => line.includes('boop')));
 });
 
 test('captured intro output is plain text without cursor control or colors', async () => {

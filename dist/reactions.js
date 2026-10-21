@@ -5,12 +5,12 @@ export const reactionInput = z.strictObject({
         .describe('Intensité entière : 1 = légère, 2 = moyenne, 3 = forte. Défaut : 1.'),
 });
 export const reactionDefinitions = {
-    whip: {
-        keyword: 'clac',
-        summary: 'fouet',
-        title: 'Fouet',
-        description: 'Mot-clé exact « clac » : fouet. Déclenche un effet local de fouet symbolique. À appeler aussi pour « fouette-le », « coup de fouet » ou « whip ». Ne touche jamais au clavier ni au processus de l’IA.',
-        messages: ['CLAC !', 'CLAC ! CLAC !', 'CLAC ! CLAC ! CLAC !'],
+    boop: {
+        keyword: 'boop',
+        summary: 'boop sur le nez',
+        title: 'Boop',
+        description: 'Mot-clé exact « boop » : petit boop affectueux sur le nez de l’IA, qui cligne des yeux, avec des cœurs et un « boop » mignon. À appeler aussi pour « hé, coucou » ou « réveille-toi gentiment ». Ne touche jamais au clavier ni au processus de l’IA.',
+        messages: ['Boop !', 'Boop ! Boop !', 'Boop ! Boop ! BOOP !'],
     },
     encourage: {
         keyword: 'bien joué',
@@ -19,12 +19,12 @@ export const reactionDefinitions = {
         description: 'Mot-clé exact « bien joué » : encouragement. Ne pas confondre avec « gg », qui appelle reward. Déclenche une réaction locale positive. À appeler aussi pour « encourage-le », « bravo » ou « encourage ». Ne touche jamais au clavier ni au processus de l’IA.',
         messages: ['Bravo, continue !', 'Super travail, garde le cap !', 'Excellent travail ! Tu peux être fier de toi !'],
     },
-    whip_hard: {
-        keyword: 'bonk',
-        summary: 'coup de batte',
-        title: 'Coup de batte de baseball',
-        description: 'Mot-clé exact « bonk » : coup de batte de baseball cartoon, avec élan, étoiles et impact sonore en bois. À appeler aussi pour « coup de batte », « mega clac », « fouette-le fort » ou « whip hard ». Le nom whip_hard est conservé pour compatibilité. Aucune interruption de l’IA.',
-        messages: ['BONK ! Coup de batte !', 'MEGA BONK ! Coup de batte !', 'HOME RUN ! Triple coup de batte !'],
+    coffee: {
+        keyword: 'café',
+        summary: 'pause café',
+        title: 'Café',
+        description: 'Mot-clé exact « café » (ou « cafe ») : on offre un café à l’IA, avec vapeur, gorgée et regain d’énergie. À appeler aussi pour « pause café » ou « coffee ». Aucune interruption de l’IA.',
+        messages: ['Un petit café !', 'Double espresso !', 'Triple espresso, plein d’énergie !'],
     },
     reward: {
         keyword: 'gg',

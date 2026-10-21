@@ -11,7 +11,7 @@ const session = await connect({ effects: 'terminal' });
 let tick = 0;
 const progress = setInterval(() => process.stdout.write(`\x1b[3;1HWORK_${++tick}`), 100);
 try {
-  for (const name of ['whip', 'whip_hard', 'encourage', 'reward']) {
+  for (const name of ['boop', 'coffee', 'encourage', 'reward']) {
     const result = await session.client.callTool({ name, arguments: { intensity: 1 } });
     if (result.isError) throw new Error(JSON.stringify(result.content));
     await delay(3400);

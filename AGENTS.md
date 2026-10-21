@@ -5,8 +5,8 @@ Quand un message demande une réaction, appelle un seul outil MCP du serveur
 
 | Mot-clé | Outil | Effet |
 | --- | --- | --- |
-| `clac` | `whip` | Fouet |
-| `bonk` | `whip_hard` | Coup de batte |
+| `boop` | `boop` | Boop sur le nez |
+| `café` | `coffee` | Pause café |
 | `bien joué` | `encourage` | Encouragement |
 | `gg` | `reward` | Récompense |
 | `trop long` | `too_slow` | Impatience chill (escargot) |

@@ -23,8 +23,8 @@ async function fixture(t, options = {}) {
 test('real stdio SDK client discovers tools, calls all intensities and rejects bad input', { timeout: 20000 }, async (t) => {
   const { client, errors, diagnostics, logPath } = await fixture(t);
   const { tools } = await client.listTools();
-  assert.deepEqual(tools.map((tool) => tool.name).sort(), ['chill', 'confused', 'encourage', 'ez', 'facepalm', 'hype', 'reward', 'rip', 'sus', 'too_slow', 'whip', 'whip_hard']);
-  for (const [name, keyword] of Object.entries({ whip: 'clac', whip_hard: 'bonk', encourage: 'bien joué', reward: 'gg', too_slow: 'trop long', chill: 'chill', confused: 'wtf', facepalm: 'bruh', hype: 'let\'s go', rip: 'rip', sus: 'susp', ez: 'ez' })) {
+  assert.deepEqual(tools.map((tool) => tool.name).sort(), ['boop', 'chill', 'coffee', 'confused', 'encourage', 'ez', 'facepalm', 'hype', 'reward', 'rip', 'sus', 'too_slow']);
+  for (const [name, keyword] of Object.entries({ boop: 'boop', coffee: 'café', encourage: 'bien joué', reward: 'gg', too_slow: 'trop long', chill: 'chill', confused: 'wtf', facepalm: 'bruh', hype: 'let\'s go', rip: 'rip', sus: 'susp', ez: 'ez' })) {
     assert.ok(tools.find((tool) => tool.name === name).description.includes(`« ${keyword} »`));
   }
   for (const tool of tools) {
@@ -34,7 +34,7 @@ test('real stdio SDK client discovers tools, calls all intensities and rejects b
     assert.equal(tool.annotations.readOnlyHint, false);
     assert.equal(tool.annotations.openWorldHint, false);
   }
-  for (const name of ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
+  for (const name of ['boop', 'coffee', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez']) {
     for (const intensity of [1, 2, 3]) {
       const result = await client.callTool({ name, arguments: { intensity } });
       assert.notEqual(result.isError, true);
@@ -48,14 +48,14 @@ test('real stdio SDK client discovers tools, calls all intensities and rejects b
       assert.equal(result.isError, true, JSON.stringify(args));
     }
   }
-  const defaultResult = await client.callTool({ name: 'whip', arguments: {} });
+  const defaultResult = await client.callTool({ name: 'boop', arguments: {} });
   assert.equal(defaultResult.structuredContent.intensity, 1);
   const events = (await readFile(logPath, 'utf8')).trim().split('\n').map(JSON.parse);
   assert.equal(events.length, 37, 'invalid calls must have no local effect');
   assert.equal(new Set(events.map((event) => event.id)).size, 37);
   await client.ping();
   assert.deepEqual(errors, [], 'stdout must contain only valid MCP messages');
-  assert.match(diagnostics.join(''), /WHIP 3\/3/);
+  assert.match(diagnostics.join(''), /BOOP 3\/3/);
   assert.match(diagnostics.join(''), /ENCOURAGE 3\/3/);
 });
 
@@ -68,7 +68,7 @@ test('write failure returns isError and the same server recovers', { timeout: 15
     await session.client.close();
     await rm(directory, { recursive: true, force: true });
   });
-  const failed = await session.client.callTool({ name: 'whip', arguments: { intensity: 2 } });
+  const failed = await session.client.callTool({ name: 'boop', arguments: { intensity: 2 } });
   assert.equal(failed.isError, true);
   assert.equal(failed.structuredContent, undefined);
   await rm(blocker);
@@ -91,7 +91,7 @@ test('multiple clients and concurrent calls persist complete local events', { ti
   t.after(() => second.client.close());
   const results = await Promise.all(Array.from({ length: 20 }, (_, index) =>
     (index % 2 ? first : second).client.callTool({
-      name: index % 2 ? 'whip' : 'encourage', arguments: { intensity: index % 3 + 1 },
+      name: index % 2 ? 'boop' : 'encourage', arguments: { intensity: index % 3 + 1 },
     })));
   assert.ok(results.every((result) => !result.isError));
   const events = (await readFile(first.logPath, 'utf8')).trim().split('\n').map(JSON.parse);
@@ -126,7 +126,7 @@ test('legacy MCP handshake, clean stdout and natural exit on stdin EOF', { timeo
     assert.equal(reply.result.serverInfo.name, 'ai-reactions');
     child.stdin.write(`${JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' })}\n`);
     const invalid = await request({
-      jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'whip', arguments: { intensity: '3' } },
+      jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'boop', arguments: { intensity: '3' } },
     });
     assert.equal(invalid.result.isError, true, 'server validates even without SDK client checks');
     const unknown = await request({
