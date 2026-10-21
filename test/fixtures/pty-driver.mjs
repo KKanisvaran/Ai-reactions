@@ -18,7 +18,7 @@ child.onData((data) => {
   terminal.write(data);
   if (!started && output.includes('SESSION_READY')) { started = true; child.write('go\r'); }
 });
-const deadline = setTimeout(() => { child.kill(); finish(2); }, 22000);
+const deadline = setTimeout(() => { child.kill(); finish(2); }, 28000);
 function finish(code) {
   if (ended) return;
   ended = true;

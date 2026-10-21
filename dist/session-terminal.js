@@ -1,5 +1,7 @@
 import xterm from '@xterm/headless';
+import { AmbientMood, ambientBand, bandRows, looksBusy } from "./ambient.js";
 import { playTerminalEffect } from "./terminal-output.js";
+const BUSY_ROWS = 15;
 // The outer terminal belongs to this launcher. The AI has a separate PTY and
 // continues updating this bounded virtual screen while an animation is shown.
 export class SessionTerminal {
@@ -11,11 +13,25 @@ export class SessionTerminal {
     output;
     options;
     cursorVisible = true;
-    constructor(output, options) {
+    // Ambient band below the AI: the tiger, fed by what the AI's screen shows.
+    mood;
+    band = 0;
+    ticker;
+    lastOutput = -Infinity;
+    lastInput = -Infinity;
+    shownBand = '';
+    constructor(output, options, { ambient = false } = {}) {
         this.output = output;
         this.options = options;
+        const columns = output.columns ?? 80, rows = output.rows ?? 24;
+        if (ambient) {
+            this.mood = new AmbientMood(performance.now());
+            this.band = bandRows(columns, rows);
+            this.ticker = setInterval(() => this.renderBand(), 150);
+            this.ticker.unref?.();
+        }
         this.terminal = new xterm.Terminal({
-            cols: output.columns ?? 80, rows: output.rows ?? 24,
+            cols: columns, rows: Math.max(1, rows - this.band),
             scrollback: 1000, allowProposedApi: true,
         });
         this.terminal.onWriteParsed(() => this.schedule());
@@ -28,10 +44,18 @@ export class SessionTerminal {
         }
     }
     write(data) {
+        if (data)
+            this.lastOutput = performance.now();
         return new Promise((resolve) => this.terminal.write(data, resolve));
     }
+    /** User keystrokes: their echo is not the AI working. */
+    noteInput() {
+        this.lastInput = performance.now();
+    }
     resize(columns, rows) {
-        this.terminal.resize(Math.max(1, columns), Math.max(1, rows));
+        if (this.mood)
+            this.band = bandRows(columns, rows);
+        this.terminal.resize(Math.max(1, columns), Math.max(1, rows - this.band));
         this.schedule();
     }
     schedule() {
@@ -86,12 +110,43 @@ export class SessionTerminal {
                 frame += cell.getChars() || ' ';
             }
         }
-        const modes = terminal.modes;
-        frame += `\x1b[0m\x1b[${buffer.cursorY + 1};${buffer.cursorX + 1}H`;
+        frame += this.bandFrame();
+        frame += this.cursorFrame();
+        this.output.write(frame);
+    }
+    /** Repaints the band only, between two AI frames. */
+    renderBand() {
+        if (this.closed || this.animating || !this.band)
+            return;
+        const shown = this.shownBand, band = this.bandFrame();
+        if (band !== shown)
+            this.output.write(`\x1b[?2026h\x1b[?25l${band}${this.cursorFrame()}`);
+    }
+    bandFrame() {
+        if (!this.mood || !this.band)
+            return '';
+        // The busy marker sits just above the AI's prompt: only the bottom rows
+        // count, so a conversation quoting it does not keep the tiger at work.
+        // AIs animate a spinner beside it, so a marker without output is stale.
+        const buffer = this.terminal.buffer.active;
+        let screen = '';
+        for (let y = Math.max(0, this.terminal.rows - BUSY_ROWS); y < this.terminal.rows; y++)
+            screen += `${buffer.getLine(buffer.viewportY + y)?.translateToString(true) ?? ''}\n`;
+        const now = performance.now();
+        const fresh = now - this.lastOutput;
+        const busy = (fresh < 2000 && looksBusy(screen)) || (fresh < 1000 && now - this.lastInput > 1500);
+        const lines = ambientBand(this.mood.update(now, busy), this.terminal.cols);
+        this.shownBand = lines.map((line, i) => `\x1b[${this.terminal.rows + i + 1};1H\x1b[0m\x1b[2K${line}`).join('');
+        return this.shownBand;
+    }
+    cursorFrame() {
+        const buffer = this.terminal.buffer.active;
+        const modes = this.terminal.modes;
+        let frame = `\x1b[0m\x1b[${buffer.cursorY + 1};${buffer.cursorX + 1}H`;
         frame += `\x1b[?1${modes.applicationCursorKeysMode ? 'h' : 'l'}`;
         frame += `\x1b[?2004${modes.bracketedPasteMode ? 'h' : 'l'}`;
         frame += `\x1b[?25${this.cursorVisible ? 'h' : 'l'}\x1b[?2026l`;
-        this.output.write(frame);
+        return frame;
     }
     react(event) {
         const task = this.pending.then(async () => {
@@ -127,6 +182,8 @@ export class SessionTerminal {
         this.closed = true;
         if (this.timer)
             clearTimeout(this.timer);
+        if (this.ticker)
+            clearInterval(this.ticker);
         await this.pending;
         this.terminal.dispose();
     }

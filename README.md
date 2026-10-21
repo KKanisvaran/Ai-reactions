@@ -26,6 +26,9 @@ ASCII avec son, dans le même terminal, puis reprend son travail là où elle en
 - **Sons synthétisés à la volée** : aucun fichier audio, rien de téléchargé.
 - **Dans le terminal de l’IA**, sans fenêtre ni overlay. L’écran de l’IA est
   restauré après l’effet.
+- **Un tigre qui vit sous l’IA**, sans mot-clé : il tape avec elle quand elle
+  travaille, s’endort sur les longues tâches, fête la fin et reçoit des visiteurs
+  quand tout est calme. Discret et silencieux.
 - **Protocole standard** : un serveur [MCP](https://modelcontextprotocol.io) local,
   compatible avec tous les clients qui le supportent.
 
@@ -125,6 +128,9 @@ l’identité **KK LAB** et son tigre.
   un pseudo-terminal `node-pty`, garde une copie de son écran avec
   `@xterm/headless`, et anime chaque nouvel événement du journal avant de
   restaurer l’écran.
+- **Bandeau ambiant** (`src/ambient.ts`) : réserve 4 lignes sous l’IA et déduit
+  son activité de l’écran virtuel (« esc to interrupt », sortie en cours), en
+  mémoire uniquement.
 - **Rendu et son** (`src/terminal-animation.ts`, `src/sound.ts`) : images ASCII
   générées image par image, sons WAV synthétisés mathématiquement.
 - **Intro** (`src/intro.ts`, `src/mascot.ts`) : tigre en pixel art truecolor
@@ -151,17 +157,20 @@ Configuration manuelle d’un client MCP : commande `node`, argument
 | `AI_REACTIONS_SOUND` | `1` | `0` coupe le son |
 | `AI_REACTIONS_VOLUME` | `0.3` | Volume de 0 à 1 |
 | `AI_REACTIONS_INTRO` | `1` | `0` désactive l’intro du premier lancement |
+| `AI_REACTIONS_AMBIENT` | `1` | `0` retire le tigre sous l’IA |
 | `AI_REACTIONS_EFFECTS` | `terminal` | `text` : journal et messages seuls |
 | `AI_REACTIONS_LOG` | `~/.ai-reactions/reactions.jsonl` | Chemin absolu du journal |
 
 Le terminal doit faire au moins 61 × 16 caractères pour les animations et
-86 × 24 pour le tigre de l’intro. En dessous, ou si la sortie est capturée,
+86 × 24 pour le tigre de l’intro. Le bandeau du tigre apparaît à partir de 40 × 20. En dessous, ou si la sortie est capturée,
 une image fixe est affichée.
 
 ## Sécurité et vie privée
 
 - Tout reste **local** : aucun port ouvert, aucune requête réseau, aucune télémétrie.
 - Le journal ne contient que les réactions, jamais tes conversations.
+- Le bandeau lit l’écran de l’IA en mémoire pour savoir si elle travaille :
+  rien n’est enregistré ni envoyé.
 - Les entrées MCP sont validées strictement. Le journal rejette les caractères
   de contrôle, pour qu’aucune séquence ne puisse piloter ton terminal.
 - Aucune touche n’est simulée et aucun processus n’est interrompu.

@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { ambientEnabled } from '../dist/ambient.js';
 import { playIntro } from '../dist/intro.js';
 import { JournalReader } from '../dist/journal-reader.js';
 import { reactionLogPath } from '../dist/local-output.js';
@@ -17,7 +18,8 @@ if (args[0] === '--help') {
     + 'Dans le chat : boop = boop sur le nez ; café = pause café ; bien joué = encouragement ; gg = récompense ;\n'
     + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
     + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.\n'
-    + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.');
+    + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.\n'
+    + 'Un tigre vit sous l’IA et réagit à son activité (AI_REACTIONS_AMBIENT=0 pour le retirer).');
 } else if (!process.stdin.isTTY || !process.stdout.isTTY) {
   console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
   process.exitCode = 1;
@@ -41,7 +43,7 @@ async function run(command) {
   try {
     const reader = new JournalReader(reactionLogPath());
     await reader.start();
-    screen = new SessionTerminal(process.stdout, effectOptions());
+    screen = new SessionTerminal(process.stdout, effectOptions(), { ambient: ambientEnabled() });
     let executable = command[0], arguments_ = command.slice(1);
     if (process.platform === 'win32') {
       if (['codex', 'gemini', 'npm', 'npx'].includes(executable)) executable += '.cmd';
@@ -55,7 +57,7 @@ async function run(command) {
     }
     ensureSpawnHelper();
     child = pty.spawn(executable, arguments_, {
-      name: 'xterm-256color', cols: process.stdout.columns, rows: process.stdout.rows,
+      name: 'xterm-256color', cols: screen.terminal.cols, rows: screen.terminal.rows,
       useConptyDll: true,
       cwd: process.cwd(), env: { ...process.env, TERM: 'xterm-256color' },
     });
@@ -63,12 +65,12 @@ async function run(command) {
     child.onData((data) => { void screen.write(data); });
     // Replies to terminal protocol queries, not synthetic user input.
     screen.terminal.onData((data) => { if (!stop) child.write(data); });
-    input = (data) => { if (!stop) child.write(data.toString('utf8')); };
+    input = (data) => { if (!stop) { screen.noteInput(); child.write(data.toString('utf8')); } };
     resize = () => {
       if (stop) return;
       const cols = Math.max(1, process.stdout.columns), rows = Math.max(1, process.stdout.rows);
       screen.resize(cols, rows);
-      try { child.resize(cols, rows); } catch { /* The child may just have exited. */ }
+      try { child.resize(screen.terminal.cols, screen.terminal.rows); } catch { /* The child may just have exited. */ }
     };
     process.stdout.write('\x1b[?1049h\x1b[2J\x1b[H');
     entered = true;

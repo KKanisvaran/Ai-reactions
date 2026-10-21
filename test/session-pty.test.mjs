@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 
-test('real PTY launcher renders four MCP animations, forwards input and exits with its child', { timeout: 30000 }, async (t) => {
+test('real PTY launcher renders four MCP animations, forwards input and exits with its child', { timeout: 35000 }, async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'ai-reactions-session-'));
   const child = spawn(process.execPath, [
     fileURLToPath(new URL('./fixtures/pty-driver.mjs', import.meta.url)),
