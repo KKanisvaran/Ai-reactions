@@ -4,12 +4,12 @@ import { fileURLToPath } from 'node:url';
 import { ensureSpawnHelper } from '../../scripts/pty-helper.mjs';
 
 // Isolate ConPTY's worker handles in their own host, like the real launcher.
-const terminal = new xterm.Terminal({ cols: 80, rows: 24, allowProposedApi: true });
+const terminal = new xterm.Terminal({ cols: 80, rows: 27, allowProposedApi: true });
 ensureSpawnHelper();
 const child = pty.spawn(process.execPath, [
   fileURLToPath(new URL('../../scripts/session.mjs', import.meta.url)),
   ...process.argv.slice(2),
-], { cols: 80, rows: 24, name: 'xterm-256color', useConptyDll: true, env: process.env });
+], { cols: 80, rows: 27, name: 'xterm-256color', useConptyDll: true, env: process.env });
 let output = '', started = false, ended = false;
 terminal.onData((data) => { if (!ended) child.write(data); });
 child.onData((data) => {

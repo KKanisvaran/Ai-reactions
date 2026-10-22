@@ -1,13 +1,16 @@
 # ai-reactions · KK LAB
 
-**Réagis à ton IA, directement dans son terminal.** Tape `gg`, `boop` ou `trop long`
-dans le chat de Codex, Claude Code ou Gemini CLI : l’IA déclenche une animation
-ASCII avec son, dans le même terminal, puis reprend son travail là où elle en était.
+**Un pingouin qui vit sous ton IA.** Lance Codex, Claude Code ou Gemini CLI avec
+`ai-reactions` : un petit pingouin en pixel art s’installe sur sa banquise, en
+bas du terminal, sous un ciel étoilé, et réagit tout seul à ce que fait l’IA. Il bosse avec elle, prend un
+café sur les longues tâches, fête la fin, se cache les yeux quand tu
+l’interromps, part pêcher quand tout est calme. Aucun mot-clé à retenir, et rien
+ne vient interrompre ni recouvrir l’IA.
 
 > **Projet 100 % pour le fun.** Ça ne sert à rien, c’est un peu débile, et c’est
 > exactement le but : rendre le code avec une IA un peu plus drôle.
 
-![Intro KK LAB : le tigre et les mots-clés](docs/kk-lab-intro.png)
+![Intro KK LAB : le tigre KK LAB et son petit mot](docs/kk-lab-intro.png)
 
 ```text
 +----------------------------------------------------------+
@@ -24,11 +27,10 @@ ASCII avec son, dans le même terminal, puis reprend son travail là où elle en
 
 - **12 réactions**, du `boop` sur le nez au `chill` lo-fi, chacune en 3 intensités.
 - **Sons synthétisés à la volée** : aucun fichier audio, rien de téléchargé.
-- **Dans le terminal de l’IA**, sans fenêtre ni overlay. L’écran de l’IA est
-  restauré après l’effet.
-- **Un tigre qui vit sous l’IA**, sans mot-clé : il tape avec elle quand elle
-  travaille, s’endort sur les longues tâches, fête la fin et reçoit des visiteurs
-  quand tout est calme. Discret et silencieux.
+- **Tout seul** : les réactions se déclenchent d’après l’écran de l’IA, sans
+  mot-clé ni prompt à envoyer.
+- **En bas, jamais par-dessus** : le bandeau vit sous l’IA, qui reste visible et
+  utilisable pendant chaque animation. Sans fenêtre ni overlay.
 - **Protocole standard** : un serveur [MCP](https://modelcontextprotocol.io) local,
   compatible avec tous les clients qui le supportent.
 
@@ -53,9 +55,39 @@ du dépôt puis `npm install -g --install-links ./Ai-reactions`.
 
 Désinstallation : `npm uninstall -g ai-reactions`.
 
-## Les mots-clés
+## Ce qui fait réagir le pingouin
 
-Tape le mot-clé dans le chat de l’IA lancée avec `ai-reactions <ia>`.
+| Ce que fait l’IA | Réaction dans le bandeau |
+| --- | --- |
+| Elle se met au travail | Le pingouin glisse jusqu’à son ordi, puis s’y concentre, avec un coup d’œil de temps en temps |
+| Plus de 45 s de travail | Pause café |
+| Plus de 2 min 30 | L’escargot : ça traîne |
+| Elle a fini, en 15 à 40 s | EZ |
+| Elle a fini, en 40 s à 2 min | Encouragement ou fusée |
+| Elle a fini, après plus de 2 min | Trophée et XP |
+| Elle attend ton feu vert (permission) | Regard suspicieux |
+| Tu l’interromps | Facepalm |
+| Erreur d’API | Pierre tombale |
+| 5 min sans activité | Lunettes de soleil et lo-fi, puis il part pêcher et finit par s’endormir |
+| Tu reviens taper | Boop, il se réveille |
+| Tout est calme | Il cligne des yeux et regarde autour de lui ; une mouette, un poisson qui saute ou une étoile filante passe le voir |
+
+Les réactions sont en pixel art, dans le décor : cœurs, tasse fumante, escargot,
+palmier, trophée, fusée, pierre tombale… Seule leur légende est du texte.
+
+La molette de la souris fait défiler l’historique de l’IA, comme une page ;
+n’importe quelle touche ramène l’écran en direct. Pour sélectionner du texte,
+maintiens Maj en glissant.
+
+Le lancement commence par l’intro KK LAB : le tigre se dessine, avec son petit
+mot. Puis le pingouin se dessine à son tour dans le bandeau, contour d’abord. Ses
+12 poses viennent pixel pour pixel de sa planche de dessin. Les réactions
+automatiques sont silencieuses.
+
+### Bonus : les mots-clés
+
+Tu peux aussi demander une réaction à l’IA en tapant son mot-clé dans le chat.
+L’IA appelle l’outil MCP et l’animation se joue dans le bandeau, avec son.
 Demande « intensité 2 » ou « intensité 3 » pour un effet plus long et plus intense.
 
 | Mot-clé | Effet | Son |
@@ -95,9 +127,13 @@ ont façonné la suite :
 2. **Ne jamais toucher à l’IA.** Pas de touches simulées, pas d’interruption de
    processus : l’IA continue de travailler pendant l’effet.
 
+La version 2 retire la dernière friction : taper un mot-clé, c’est envoyer un
+prompt à l’IA. Un pingouin vit désormais dans un bandeau sous l’IA, lit son
+écran en mémoire et réagit tout seul, sans jamais la recouvrir.
+
 Les réactions sont ensuite devenues plus variées et plus chill (`trop long`,
 `chill`, `bruh`…). Puis le projet est devenu une vraie CLI installable, avec
-l’identité **KK LAB** et son tigre.
+l’identité **KK LAB** et son tigre en intro.
 
 ## Comment ça marche
 
@@ -112,7 +148,7 @@ l’identité **KK LAB** et son tigre.
    │  note la réaction dans son carnet (~/.ai-reactions/*.jsonl)
    ▼
   lanceur ai-reactions
-   │  voit la note et joue l’anim par-dessus l’écran de l’IA
+   │  voit la note et joue l’anim dans le bandeau, sous l’IA
    ▼
   ╭──────────────────────╮
   │  \o/  +XP  ta-da-da! │   ♪ fanfare
@@ -126,15 +162,21 @@ l’identité **KK LAB** et son tigre.
   stdio, valide chaque appel et écrit l’événement dans un journal local.
 - **Lanceur** (`scripts/session.mjs`, `src/session-terminal.ts`) : lance l’IA dans
   un pseudo-terminal `node-pty`, garde une copie de son écran avec
-  `@xterm/headless`, et anime chaque nouvel événement du journal avant de
-  restaurer l’écran.
-- **Bandeau ambiant** (`src/ambient.ts`) : réserve 4 lignes sous l’IA et déduit
-  son activité de l’écran virtuel (« esc to interrupt », sortie en cours), en
-  mémoire uniquement.
+  `@xterm/headless`, et réserve le bas du terminal au bandeau.
+- **Bandeau** (`src/ambient.ts`, `src/penguin.ts`, `src/decor.ts`, `src/scenes.ts`) :
+  10 lignes sous l’IA, le pingouin en pixel art (une pose par état) dans sa nuit polaire :
+  ciel en dégradé, étoiles qui scintillent, lune, montagnes, mer qui miroite,
+  banquise, bonhomme de neige et petite neige. Il déduit l’activité de l’IA de
+  l’écran virtuel (« esc to interrupt », demandes de permission, interruptions),
+  en mémoire uniquement, et y joue toutes les réactions.
 - **Rendu et son** (`src/terminal-animation.ts`, `src/sound.ts`) : images ASCII
   générées image par image, sons WAV synthétisés mathématiquement.
-- **Intro** (`src/intro.ts`, `src/mascot.ts`) : tigre en pixel art truecolor
-  (demi-blocs Unicode), titre en dégradé.
+- **Intro** (`src/intro.ts`, `src/mascot-render.ts`, `src/mascot-image.ts`) : à
+  chaque lancement, la mascotte KK LAB se dessine au centre d’après son SVG, avec
+  son petit mot en dessous ; au premier lancement, la liste des mots-clés suit.
+  Dans un terminal compatible Sixel (Windows Terminal 1.22+, WezTerm, iTerm2),
+  l’image elle-même remplace le dessin ; ailleurs, dont le terminal de VS Code
+  sous Windows, le tigre reste en demi-blocs Unicode truecolor.
 
 ## Commandes
 
@@ -156,21 +198,27 @@ Configuration manuelle d’un client MCP : commande `node`, argument
 | --- | --- | --- |
 | `AI_REACTIONS_SOUND` | `1` | `0` coupe le son |
 | `AI_REACTIONS_VOLUME` | `0.3` | Volume de 0 à 1 |
-| `AI_REACTIONS_INTRO` | `1` | `0` désactive l’intro du premier lancement |
-| `AI_REACTIONS_AMBIENT` | `1` | `0` retire le tigre sous l’IA |
+| `AI_REACTIONS_INTRO` | `1` | `0` désactive l’intro du lancement |
+| `AI_REACTIONS_AMBIENT` | `1` | `0` retire le pingouin sous l’IA |
 | `AI_REACTIONS_EFFECTS` | `terminal` | `text` : journal et messages seuls |
 | `AI_REACTIONS_LOG` | `~/.ai-reactions/reactions.jsonl` | Chemin absolu du journal |
 
-Le terminal doit faire au moins 61 × 16 caractères pour les animations et
-86 × 24 pour le tigre de l’intro. Le bandeau du tigre apparaît à partir de 40 × 20. En dessous, ou si la sortie est capturée,
-une image fixe est affichée.
+Le bandeau fait toujours 10 lignes : comme une image sur une page web, le
+pingouin garde sa taille et seul le décor suit la largeur du terminal (le
+bonhomme de neige apparaît à partir de 100 colonnes, les scènes sont coupées au
+bord quand la place manque). Il demande au moins 40 × 18 caractères. En dessous, l’IA garde tout
+l’écran et une réaction MCP s’affiche en plein écran le temps de l’effet
+(61 × 16 minimum). L’intro s’adapte au terminal : 30 × 13 au minimum, 54 × 22 pour
+la liste des mots-clés. Si la sortie est capturée, une image fixe est affichée.
 
 ## Sécurité et vie privée
 
 - Tout reste **local** : aucun port ouvert, aucune requête réseau, aucune télémétrie.
 - Le journal ne contient que les réactions, jamais tes conversations.
-- Le bandeau lit l’écran de l’IA en mémoire pour savoir si elle travaille :
-  rien n’est enregistré ni envoyé.
+- Le bandeau lit le bas de l’écran de l’IA, en mémoire, pour y repérer quelques
+  indices génériques (« esc to interrupt », une demande de permission, une
+  erreur d’API). Il n’en garde que des oui/non : jamais le texte, ni ton code, ni
+  tes questions. Rien n’est enregistré ni envoyé. `AI_REACTIONS_AMBIENT=0` le coupe.
 - Les entrées MCP sont validées strictement. Le journal rejette les caractères
   de contrôle, pour qu’aucune séquence ne puisse piloter ton terminal.
 - Aucune touche n’est simulée et aucun processus n’est interrompu.
@@ -182,7 +230,7 @@ Pour signaler une faille, voir [SECURITY.md](SECURITY.md).
 ```sh
 git clone https://github.com/KKanisvaran/Ai-reactions.git && cd Ai-reactions
 npm ci
-npm test               # build + 24 tests : MCP, rendu, sons, journal, pseudo-terminal réel
+npm test               # build + 34 tests : MCP, rendu, sons, journal, pseudo-terminal réel
 npm run demo
 npm run ai -- codex    # lanceur depuis les sources
 ```
@@ -199,9 +247,10 @@ Pour ajouter une réaction : sa définition (mot-clé, résumé, messages) dans
 
 Code sous licence **MIT**, voir [LICENSE](LICENSE).
 
-**Exception** : le nom et le logo **KK LAB** ainsi que la mascotte tigre, y compris
-sa version pixel art dans `src/mascot.ts` et l’intro, restent © KKanisvaran, **tous
-droits réservés**. Un fork peut reprendre le code, mais doit remplacer ces éléments.
+**Exception** : le nom et le logo **KK LAB**, la mascotte tigre (son image dans
+`src/mascot-image.ts` et l’intro) et le pingouin (ses poses dans `src/penguin.ts`)
+restent © KKanisvaran, **tous droits réservés**. Un fork peut reprendre le code,
+mais doit remplacer ces éléments.
 
 ---
 
