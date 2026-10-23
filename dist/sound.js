@@ -1,5 +1,5 @@
 export function effectDuration(name, intensity) {
-    return 2400 + intensity * 250 + (name === 'whip_hard' ? 300 : 0);
+    return 2400 + intensity * 250 + (name === 'coffee' ? 300 : 0);
 }
 /** Original PCM synthesis: no downloaded sounds, external files or audio packages. */
 export function synthesizeSound(name, intensity, volume) {
@@ -24,31 +24,35 @@ export function synthesizeSound(name, intensity, volume) {
     wav.write('data', 36);
     wav.writeUInt32LE(count * 2, 40);
     let seed = 731;
+    let low = 0;
     const noise = () => { seed = (Math.imul(seed, 1664525) + 1013904223) >>> 0; return seed / 0xffffffff * 2 - 1; };
     for (let i = 0; i < count; i++) {
         const t = i / rate;
         let sample = 0;
-        if (name === 'whip' || name === 'whip_hard') {
+        if (name === 'boop') {
+            // Soft falling "boop" per tap, with a tiny pop on contact.
             for (let hit = 0; hit < intensity; hit++) {
                 const u = t - (0.55 + hit * 0.5);
-                if (u > -0.24 && u < 0) {
-                    const sweep = (u + 0.24) / 0.24;
-                    sample += noise() * sweep * sweep * (name === 'whip_hard' ? 0.18 : 0.38);
-                }
-                if (u >= 0 && u < 0.22) {
-                    if (name === 'whip_hard') {
-                        // Short woody knock and a low cartoon thud, distinct from the whip crack.
-                        sample += noise() * Math.exp(-u * 140) * 0.35;
-                        sample += Math.sin(2 * Math.PI * 185 * u) * Math.exp(-u * 28) * 0.65;
-                        sample += Math.sin(2 * Math.PI * 470 * u) * Math.exp(-u * 45) * 0.23;
-                        sample += Math.sin(2 * Math.PI * 74 * u) * Math.exp(-u * 20) * 0.18;
-                    }
-                    else {
-                        sample += noise() * Math.exp(-u * 55);
-                        sample += Math.sin(2 * Math.PI * 95 * u) * Math.exp(-u * 24) * 0.24;
-                    }
+                if (u >= 0 && u < 0.18) {
+                    const envelope = Math.min(1, u / 0.01) * Math.exp(-u * 14);
+                    sample += Math.sin(2 * Math.PI * (880 * u - 1100 * u * u)) * envelope * 0.5;
+                    sample += noise() * Math.exp(-u * 300) * 0.08;
                 }
             }
+        }
+        else if (name === 'coffee') {
+            // Gentle sip, then a bright rising arpeggio: one more note per intensity.
+            if (t >= 0.35 && t < 0.85) {
+                low += (noise() - low) * 0.08;
+                sample += low * Math.sin(Math.PI * (t - 0.35) / 0.5) * 0.5;
+            }
+            [523, 659, 784, 1047, 1319].slice(0, 2 + intensity).forEach((freq, n) => {
+                const u = t - (1.05 + n * 0.13);
+                if (u >= 0 && u < 0.4) {
+                    const envelope = Math.min(1, u / 0.01) * Math.exp(-u * 7);
+                    sample += (Math.sin(2 * Math.PI * freq * u) + Math.sin(4 * Math.PI * freq * u) * 0.25) * envelope * 0.3;
+                }
+            });
         }
         else if (name === 'too_slow') {
             // Slow clock: alternating tick and tock.

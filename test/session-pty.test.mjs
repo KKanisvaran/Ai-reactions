@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { spawn } from 'node:child_process';
 import { once } from 'node:events';
 
-test('real PTY launcher renders four MCP animations, forwards input and exits with its child', { timeout: 30000 }, async (t) => {
+test('real PTY launcher plays four MCP reactions in the band, forwards input and exits with its child', { timeout: 55000 }, async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'ai-reactions-session-'));
   const child = spawn(process.execPath, [
     fileURLToPath(new URL('./fixtures/pty-driver.mjs', import.meta.url)),
@@ -27,9 +27,10 @@ test('real PTY launcher renders four MCP animations, forwards input and exits wi
   const [exitCode] = await exited;
   assert.equal(exitCode, 0, errors + output.slice(-3000));
   assert.match(output, /SESSION_READY/, 'the child runs interactively');
-  for (const label of ['FOUET / CLAC', 'BATTE DE BASEBALL', 'ENCOURAGEMENT / BRAVO', 'RECOMPENSE / LEVEL UP']) {
-    assert.ok(output.split(label).length > 10, `multiple animated frames for ${label}`);
+  for (const caption of ['Boop !', 'Un petit café !', 'Bravo, continue !', 'Bien mérité ! +10 XP']) {
+    assert.ok(output.includes(caption), `band caption ${caption}`);
   }
+  assert.ok(!output.includes('BOOP / SUR LE NEZ'), 'the AI screen is never covered');
   assert.match(output, /SESSION_DONE/);
   assert.match(output, /WORK_1\d\d/, 'AI output continues during animations');
 });

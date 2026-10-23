@@ -3,29 +3,34 @@ import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
+import { ambientEnabled } from '../dist/ambient.js';
 import { playIntro } from '../dist/intro.js';
 import { JournalReader } from '../dist/journal-reader.js';
 import { reactionLogPath } from '../dist/local-output.js';
+import { InputReader, leftClick, MOUSE_OFF, MOUSE_ON } from '../dist/mouse.js';
 import { effectOptions } from '../dist/terminal-output.js';
 import { SessionTerminal } from '../dist/session-terminal.js';
+import { ensureSpawnHelper } from './pty-helper.mjs';
 
 const args = process.argv.slice(2);
 if (args[0] === '--') args.shift();
 if (args[0] === '--help') {
   console.log('Usage : ai-reactions codex [arguments] (ou claude, gemini)\n'
-    + 'Dans le chat : clac = fouet ; bonk = batte ; bien joué = encouragement ; gg = récompense ;\n'
+    + 'Un pingouin vit dans un bandeau sous l’IA et réagit tout seul à ce qu’elle fait,\n'
+    + 'sans mot-clé et sans jamais la recouvrir (AI_REACTIONS_AMBIENT=0 pour le retirer).\n'
+    + 'Bonus, dans le chat : boop = boop sur le nez ; café = pause café ; bien joué = encouragement ; gg = récompense ;\n'
     + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
-    + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.\n'
-    + 'Les réactions MCP sont animées dans ce terminal, puis l’écran de l’IA est restauré.');
+    + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.');
 } else if (!process.stdin.isTTY || !process.stdout.isTTY) {
   console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
   process.exitCode = 1;
 } else {
-  // First launch only: present KK LAB and the chat keywords.
+  // The KK LAB mascot draws itself at every launch; the first one also presents the chat keywords.
   const seen = join(dirname(reactionLogPath()), 'intro-seen');
-  if (process.env.AI_REACTIONS_INTRO !== '0' && !existsSync(seen)) {
-    await playIntro();
-    try { mkdirSync(dirname(seen), { recursive: true }); writeFileSync(seen, ''); } catch { /* Shown again next time. */ }
+  if (process.env.AI_REACTIONS_INTRO !== '0') {
+    const first = !existsSync(seen);
+    await playIntro(process.stdout, process.stdin, { keywords: first });
+    if (first) try { mkdirSync(dirname(seen), { recursive: true }); writeFileSync(seen, ''); } catch { /* Shown again next time. */ }
   }
   await run(args.length ? args : ['codex']);
   // ConPTY can retain worker handles after onExit. The child has already
@@ -40,19 +45,21 @@ async function run(command) {
   try {
     const reader = new JournalReader(reactionLogPath());
     await reader.start();
-    screen = new SessionTerminal(process.stdout, effectOptions());
+    screen = new SessionTerminal(process.stdout, effectOptions(), { ambient: ambientEnabled() });
     let executable = command[0], arguments_ = command.slice(1);
     if (process.platform === 'win32') {
       if (['codex', 'gemini', 'npm', 'npx'].includes(executable)) executable += '.cmd';
       // PowerShell resolves npm .cmd shims as well as native executables.
       // Every user argument is a single-quoted literal, never executable code.
-      const quote = (value) => `'${value.replaceAll("'", "''")}'`;
+      // PowerShell also closes single quotes on typographic quotes: double them all.
+      const quote = (value) => `'${value.replace(/['‘’‚‛]/g, '$&$&')}'`;
       const script = `$ErrorActionPreference = 'Stop'; try { & ${quote(executable)} ${arguments_.map(quote).join(' ')}; if ($null -ne $LASTEXITCODE) { exit $LASTEXITCODE } } catch { [Console]::Error.WriteLine($_.Exception.Message); exit 1 }`;
       executable = join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'WindowsPowerShell', 'v1.0', 'powershell.exe');
       arguments_ = ['-NoLogo', '-NoProfile', '-EncodedCommand', Buffer.from(script, 'utf16le').toString('base64')];
     }
+    ensureSpawnHelper();
     child = pty.spawn(executable, arguments_, {
-      name: 'xterm-256color', cols: process.stdout.columns, rows: process.stdout.rows,
+      name: 'xterm-256color', cols: screen.terminal.cols, rows: screen.terminal.rows,
       useConptyDll: true,
       cwd: process.cwd(), env: { ...process.env, TERM: 'xterm-256color' },
     });
@@ -60,14 +67,30 @@ async function run(command) {
     child.onData((data) => { void screen.write(data); });
     // Replies to terminal protocol queries, not synthetic user input.
     screen.terminal.onData((data) => { if (!stop) child.write(data); });
-    input = (data) => { if (!stop) child.write(data.toString('utf8')); };
+    // The mouse wheel scrolls the AI's history, like a page; any key brings
+    // the live screen back. An AI that asked for the mouse gets it instead.
+    // Below the AI, a click goes to the penguin.
+    const terminalInput = new InputReader();
+    input = (data) => {
+      if (stop) return;
+      const { keys, wheel, reports } = terminalInput.read(data.toString('utf8'));
+      const band = reports.filter((report) => report.row > screen.terminal.rows);
+      for (const report of band) if (leftClick(report)) screen.click(report.column - 1, report.row - screen.terminal.rows - 1);
+      if (screen.terminal.modes.mouseTrackingMode !== 'none') {
+        for (const report of reports) if (report.row <= screen.terminal.rows) child.write(report.raw);
+      } else if (wheel) screen.scroll(wheel * 3);
+      if (!keys) return;
+      if (screen.scrolledBack) screen.scroll(0);
+      screen.noteInput();
+      child.write(keys);
+    };
     resize = () => {
       if (stop) return;
       const cols = Math.max(1, process.stdout.columns), rows = Math.max(1, process.stdout.rows);
       screen.resize(cols, rows);
-      try { child.resize(cols, rows); } catch { /* The child may just have exited. */ }
+      try { child.resize(screen.terminal.cols, screen.terminal.rows); } catch { /* The child may just have exited. */ }
     };
-    process.stdout.write('\x1b[?1049h\x1b[2J\x1b[H');
+    process.stdout.write(`\x1b[?1049h${MOUSE_ON}\x1b[2J\x1b[H`);
     entered = true;
     process.stdin.setRawMode(true);
     process.stdin.setEncoding('utf8');
@@ -95,7 +118,7 @@ async function run(command) {
   } catch (error) {
     stop = true;
     process.exitCode = 1;
-    if (entered) process.stdout.write('\x1b[?1049l');
+    if (entered) process.stdout.write(`${MOUSE_OFF}\x1b[?1049l`);
     entered = false;
     console.error(`Lancement impossible : ${error.message}`);
   } finally {
@@ -105,6 +128,6 @@ async function run(command) {
     process.stdin.setRawMode(Boolean(wasRaw));
     process.stdin.pause();
     await screen?.dispose();
-    if (entered) process.stdout.write('\x1b[?2026l\x1b[0m\x1b[?1l\x1b[?2004l\x1b[?25h\x1b[?1049l');
+    if (entered) process.stdout.write(`\x1b[?2026l\x1b[0m\x1b[?1l\x1b[?2004l${MOUSE_OFF}\x1b[?25h\x1b[?1049l`);
   }
 }

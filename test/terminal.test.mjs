@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { animateTerminal, terminalFrame } from '../scripts/terminal-animation.mjs';
 
 test('terminal renderer gives each reaction distinct frames within its own fixed block', () => {
-  const events = ['whip', 'whip_hard', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez'].map((reaction) => ({ reaction, intensity: 2 }));
+  const events = ['boop', 'coffee', 'encourage', 'reward', 'too_slow', 'chill', 'confused', 'facepalm', 'hype', 'rip', 'sus', 'ez'].map((reaction) => ({ reaction, intensity: 2 }));
   const unique = new Set();
   for (const event of events) {
     const early = terminalFrame(event, 0.4);
@@ -15,28 +15,30 @@ test('terminal renderer gives each reaction distinct frames within its own fixed
     unique.add(impact);
   }
   assert.equal(unique.size, 12);
-  assert.match(terminalFrame(events[1], 0.6), /BATTE DE BASEBALL/);
-  assert.match(terminalFrame(events[1], 0.6), /BONK/);
+  assert.match(terminalFrame(events[1], 0.6), /CAFE \/ PETIT ESPRESSO/);
+  assert.match(terminalFrame(events[1], 0.6), /SLURP/);
+  assert.match(terminalFrame(events[1], 1.2), /BOOST x2/);
+  assert.match(terminalFrame(events[0], 0.6), /BOOP!/);
   assert.match(terminalFrame(events[2], 0.6), /\^_\^/);
   assert.match(terminalFrame(events[3], 0.6), /\^_\^/);
 });
 
 test('captured output stays static, without cursor control or a Windows window', async () => {
   let output = '';
-  await animateTerminal({ reaction: 'whip_hard', intensity: 2 }, {
+  await animateTerminal({ reaction: 'coffee', intensity: 2 }, {
     isTTY: false, write: (text) => { output += text; },
   });
-  assert.match(output, /BONK/);
+  assert.match(output, /SLURP/);
   assert.doesNotMatch(output, /\x1b/);
   assert.equal(output.trimEnd().split('\n').length, 13);
 });
 
 test('interactive renderer animates only its reserved output block and ends by itself', { timeout: 10000 }, async () => {
   const chunks = [];
-  await animateTerminal({ reaction: 'whip_hard', intensity: 1 }, {
+  await animateTerminal({ reaction: 'coffee', intensity: 1 }, {
     isTTY: true, columns: 80, rows: 24, write: (text) => { chunks.push(text); },
   });
-  const frames = chunks.filter((chunk) => chunk.includes('BATTE DE BASEBALL'));
+  const frames = chunks.filter((chunk) => chunk.includes('CAFE / PETIT ESPRESSO'));
   assert.ok(frames.length > 10);
   assert.ok(new Set(frames).size > 5);
   const sequences = chunks.join('').match(/\x1b\[[0-9;?]*[A-Za-z]/g);

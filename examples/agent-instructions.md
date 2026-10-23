@@ -1,6 +1,6 @@
 Mots-clés de réaction (un seul outil par demande, intensité 1 par défaut) :
-- `clac` → `whip` (fouet).
-- `bonk` → `whip_hard` (coup de batte).
+- `boop` → `boop` (boop sur le nez).
+- `café` → `coffee` (pause café).
 - `bien joué` → `encourage`.
 - `gg` → `reward` (récompense, pas encouragement).
 - `trop long` → `too_slow` (escargot, impatience chill).
@@ -12,9 +12,8 @@ Mots-clés de réaction (un seul outil par demande, intensité 1 par défaut) :
 - `susp` → `sus` (suspense).
 - `ez` → `ez` (victoire facile).
 
-Quand je demande « fouette-le », appelle l’outil MCP `whip` du serveur
-`ai-reactions`. Quand je demande « coup de batte », « mega clac » ou « fouette-le fort »,
-appelle `whip_hard` : c’est désormais une batte de baseball cartoon.
+Les outils sont ceux du serveur MCP `ai-reactions`.
+Quand je demande « pause café », appelle `coffee`.
 Quand je demande « encourage-le », appelle `encourage`.
 Quand je demande « récompense-le », appelle `reward`.
 Utilise `intensity: 1` sauf si je précise une intensité entière de 1 à 3.

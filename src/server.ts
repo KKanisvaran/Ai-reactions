@@ -8,7 +8,7 @@ import type { ReactionName } from './reactions.ts';
 
 export function createServer(engine = new ReactionEngine(createOutput())): McpServer {
   const server = new McpServer({ name: 'ai-reactions', version: '1.0.0' }, {
-    instructions: 'Réactions locales animées et sonores. Mots-clés : « clac » = whip (fouet) ; « bonk » = whip_hard (batte) ; « bien joué » = encourage ; « gg » = reward (récompense) ; « trop long » = too_slow ; « chill » = chill ; « wtf » = confused ; « bruh » = facepalm ; « let\'s go » = hype ; « rip » = rip ; « susp » = sus (suspense) ; « ez » = ez. Appelle un seul outil pour la demande, jamais encourage pour « gg ». Les demandes françaises fouette-le, coup de batte, encourage-le et récompense-le restent valables. Utilise intensity: 1 sauf intensité demandée (entier de 1 à 3). Ne simule aucune touche et ne coupe aucun processus. Confirme uniquement les réactions dont l’outil a retourné un succès.',
+    instructions: 'Réactions locales animées et sonores. Mots-clés : « boop » = boop (boop sur le nez) ; « café » = coffee (pause café) ; « bien joué » = encourage ; « gg » = reward (récompense) ; « trop long » = too_slow ; « chill » = chill ; « wtf » = confused ; « bruh » = facepalm ; « let\'s go » = hype ; « rip » = rip ; « susp » = sus (suspense) ; « ez » = ez. Appelle un seul outil pour la demande, jamais encourage pour « gg ». Les demandes françaises encourage-le et récompense-le restent valables. Utilise intensity: 1 sauf intensité demandée (entier de 1 à 3). Ne simule aucune touche et ne coupe aucun processus. Confirme uniquement les réactions dont l’outil a retourné un succès.',
   });
 
   for (const name of Object.keys(reactionDefinitions) as ReactionName[]) {

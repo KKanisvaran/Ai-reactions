@@ -22,15 +22,15 @@ test('same-terminal animation preserves live AI output, colors, Unicode and alte
     assert.match(text(physical), /Assistant prêt 界/);
     assert.equal(physical.buffer.active.getLine(0).getCell(0).getFgColor(), 1);
     output = '';
-    const effect = session.react({ reaction: 'whip', intensity: 1 });
+    const effect = session.react({ reaction: 'boop', intensity: 1 });
     await new Promise((resolve) => setTimeout(resolve, 100));
     await session.write('\r\nTravail terminé pendant animation');
-    assert.match(output, /FOUET/);
+    assert.match(output, /BOOP \/ SUR LE NEZ/);
     assert.doesNotMatch(output, /Travail terminé/);
     await effect;
     await write(physical, output);
     assert.match(text(physical), /Travail terminé pendant animation/);
-    assert.doesNotMatch(text(physical), /FOUET/);
+    assert.doesNotMatch(text(physical), /BOOP \/ SUR LE NEZ/);
     output = '';
     await session.write('\x1b[?1049l');
     session.render();

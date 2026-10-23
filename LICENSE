@@ -22,13 +22,15 @@ SOFTWARE.
 
 ---
 
-Exception: KK LAB brand and tiger mascot
+Exception: KK LAB brand, tiger mascot and penguin
 
-The MIT license above does not cover the "KK LAB" name and logo or the tiger
-mascot artwork, in any form: the original drawings, the pixel-art version in
-src/mascot.ts and dist/mascot.js, and their rendering in the intro screen.
+The MIT license above does not cover the "KK LAB" name and logo, the tiger
+mascot artwork or the penguin artwork, in any form: the original drawings and
+sheets in assets/, the image in src/mascot-image.ts and dist/mascot-image.js,
+the penguin poses in src/penguin.ts and dist/penguin.js, and their rendering in
+the terminal.
 Copyright (c) 2026 KKanisvaran (KK LAB). All rights reserved.
 
-They are included only so this software displays its intro. Any other use,
+They are included only so this software displays its intro and its band. Any other use,
 reproduction or modification requires prior written permission. Forks may
 keep the code and must replace or remove these elements to use them elsewhere.

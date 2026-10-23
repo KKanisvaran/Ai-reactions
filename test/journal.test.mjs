@@ -29,10 +29,10 @@ test('journal viewer skips history and preserves partial UTF-8 lines across read
   await appendFile(path, bytes.subarray(split));
   assert.deepEqual(await reader.next(), [next]);
   assert.deepEqual(await reader.next(), []);
-  await appendFile(path, `garbage\n${JSON.stringify({ ...event(), intensity: 4 })}\n${JSON.stringify({ ...event(), message: '\x1b[2J' })}\n`);
+  await appendFile(path, `garbage\n${JSON.stringify({ ...event(), intensity: 4 })}\n${JSON.stringify({ ...event(), message: '\x1b[2J' })}\n${JSON.stringify({ ...event(), message: '\u009b2J' })}\n`);
   assert.deepEqual(await reader.next(), []);
   await rename(path, join(directory, 'old.jsonl'));
-  const rotated = event('whip');
+  const rotated = event('boop');
   await writeFile(path, `${JSON.stringify(rotated)}\n`);
   assert.deepEqual(await reader.next(), [rotated]);
   await writeFile(path, '');
@@ -59,7 +59,7 @@ test('live CLI viewer receives all four real MCP tools and exits without a signa
   await started;
   const { client, errors } = await connect({ logPath: path, effects: 'terminal' });
   try {
-    for (const name of ['whip', 'whip_hard', 'encourage', 'reward']) {
+    for (const name of ['boop', 'coffee', 'encourage', 'reward']) {
       const result = await client.callTool({ name, arguments: { intensity: 2 } });
       assert.notEqual(result.isError, true);
       assert.match(result.content[0].text, /\+---/);
@@ -71,7 +71,7 @@ test('live CLI viewer receives all four real MCP tools and exits without a signa
   assert.equal(code, 0, stderr);
   assert.equal(signal, null);
   assert.equal(stderr, '');
-  for (const label of ['FOUET / CLAC', 'BATTE DE BASEBALL', 'ENCOURAGEMENT / BRAVO', 'RECOMPENSE / LEVEL UP'])
+  for (const label of ['BOOP / SUR LE NEZ', 'CAFE / PETIT ESPRESSO', 'ENCOURAGEMENT / BRAVO', 'RECOMPENSE / LEVEL UP'])
     assert.ok(stdout.includes(label), label);
   assert.match(stdout, /Visualiseur terminé/);
   assert.doesNotMatch(stdout, /\x1b/);
