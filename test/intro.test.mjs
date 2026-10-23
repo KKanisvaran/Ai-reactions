@@ -7,7 +7,7 @@ const plain = (line) => line.replace(/\x1b\[[0-9;]*m/g, '');
 const art = (frame) => frame.map(plain).join('').split(/[▀▄]/).length - 1;
 const note = 'Bienvenue sur la banquise.';
 const thanks = 'Ce petit pingouin est là pour vous tenir compagnie pendant que vous codez.';
-const wish = 'Merci de l’accueillir dans votre terminal, et bonnes aventures !';
+const wish = 'Merci de l’avoir installé, et bonnes aventures !';
 
 test('intro shows the KK LAB mascot, large enough to read and centered, with its note below', () => {
   const splash = introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain);

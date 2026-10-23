@@ -5,7 +5,7 @@ import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, p
 const NOTE = [
     ['Bienvenue sur la banquise.'],
     ['Ce petit pingouin est là', 'pour vous tenir compagnie', 'pendant que vous codez.'],
-    ['Merci de l’accueillir', 'dans votre terminal,', 'et bonnes aventures !'],
+    ['Merci de l’avoir installé,', 'et bonnes aventures !'],
 ];
 const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
 /** The note's lines on a terminal `cols` wide; `last` ends a sentence. */

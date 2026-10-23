@@ -16,8 +16,8 @@ taper : il comprend tout seul ce qui se passe, et ne vient jamais interrompre
 ni recouvrir l’IA.
 
 > **Bienvenue sur la banquise.** Ce petit pingouin est là pour vous tenir
-> compagnie pendant que vous codez. Merci de l’accueillir dans votre terminal,
-> et bonnes aventures !
+> compagnie pendant que vous codez. Merci de l’avoir installé, et bonnes
+> aventures !
 
 ![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Nounours l’ours qui demande au pingouin d’être son ami, une balade sur le dos de Bernadette la baleine, l’aurore boréale](docs/penguin-band.png)
 
