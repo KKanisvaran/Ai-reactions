@@ -17,7 +17,7 @@ ni recouvrir l’IA.
 
 > **Bienvenue sur la banquise !** Ce petit pingouin est ravi de vous tenir
 > compagnie pendant que vous codez. Merci de tout cœur de l’avoir installé :
-> on va bien s’amuser ensemble !
+> vous allez bien vous amuser ensemble !
 
 ![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Nounours l’ours qui demande au pingouin d’être son ami, une balade sur le dos de Bernadette la baleine, l’aurore boréale](docs/penguin-band.png)
 

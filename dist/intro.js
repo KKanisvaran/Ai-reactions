@@ -5,19 +5,24 @@ import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, p
 const NOTE = [
     ['Bienvenue sur la banquise !'],
     ['Ce petit pingouin est ravi', 'de vous tenir compagnie', 'pendant que vous codez.'],
-    ['Merci de tout cœur', 'de l’avoir installé :', 'on va bien s’amuser ensemble !'],
+    ['Merci de tout cœur', 'de l’avoir installé :', 'vous allez bien', 'vous amuser ensemble !'],
 ];
 const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
 /** The note's lines on a terminal `cols` wide; `last` ends a sentence. */
 function noteLines(cols) {
-    return NOTE.flatMap((pieces) => pieces.reduce((lines, piece) => {
-        const joined = lines.length ? `${lines.at(-1)} ${piece}` : piece;
-        if (lines.length && [...joined].length <= cols - 2)
-            lines[lines.length - 1] = joined;
-        else
-            lines.push(piece);
-        return lines;
-    }, []).map((text, i, all) => ({ text, last: i === all.length - 1 })));
+    return NOTE.flatMap((pieces) => {
+        const whole = pieces.join(' ');
+        // Too long for one line: it breaks between pieces, after a colon rather than mid-thought.
+        const lines = [...whole].length <= cols - 2 ? [whole] : pieces.reduce((lines, piece, i) => {
+            const joined = lines.length ? `${lines.at(-1)} ${piece}` : piece;
+            if (lines.length && !pieces[i - 1].endsWith(':') && [...joined].length <= cols - 2)
+                lines[lines.length - 1] = joined;
+            else
+                lines.push(piece);
+            return lines;
+        }, []);
+        return lines.map((text, i, all) => ({ text, last: i === all.length - 1 }));
+    });
 }
 /** The splash needs room for its note, and for the mascot when it fits. */
 const SPLASH_MIN = { cols: 30, rows: 13 };

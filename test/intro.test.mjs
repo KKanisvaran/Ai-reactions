@@ -7,7 +7,7 @@ const plain = (line) => line.replace(/\x1b\[[0-9;]*m/g, '');
 const art = (frame) => frame.map(plain).join('').split(/[▀▄]/).length - 1;
 const note = 'Bienvenue sur la banquise !';
 const thanks = 'Ce petit pingouin est ravi de vous tenir compagnie pendant que vous codez.';
-const wish = 'Merci de tout cœur de l’avoir installé : on va bien s’amuser ensemble !';
+const wish = 'Merci de tout cœur de l’avoir installé : vous allez bien vous amuser ensemble !';
 
 test('intro shows the KK LAB mascot, large enough to read and centered, with its note below', () => {
   const splash = introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain);
@@ -27,7 +27,7 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
       for (const line of frame) assert.ok([...line].length <= cols, `${cols}x${rows}: ${line}`);
     }
   }
-  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('on va bien s’amuser ensemble !'), 'the note wraps on narrow terminals');
+  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('vous amuser ensemble !'), 'the note wraps on narrow terminals');
   // The mascot draws itself (outline, then fill), then the signature and the note type in.
   assert.ok(art(introFrame(0.4)) < art(introFrame(1)));
   assert.ok(art(introFrame(1)) < art(introFrame(2)));
@@ -36,7 +36,7 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
   // Small terminals, like a VS Code panel, get the signature and the note, never a blurred mascot.
   const small = introFrame(SPLASH_FOR - 0.5, 80, 14).map(plain);
   assert.equal(art(small), 0);
-  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('pendant que vous codez.')) && small.some((line) => line.includes(wish)));
+  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('pendant que vous codez.')) && small.some((line) => line.includes('vous allez bien vous amuser ensemble !')));
 });
 
 test('the note types itself in order, slowly enough to read, then says how to skip', () => {
