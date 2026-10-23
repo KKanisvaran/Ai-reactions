@@ -5,9 +5,9 @@ import { imagesAllowed, mascotSixel, parseGraphics } from '../dist/mascot-render
 
 const plain = (line) => line.replace(/\x1b\[[0-9;]*m/g, '');
 const art = (frame) => frame.map(plain).join('').split(/[▀▄]/).length - 1;
-const note = 'Bienvenue sur la banquise.';
-const thanks = 'Ce petit pingouin est là pour vous tenir compagnie pendant que vous codez.';
-const wish = 'Merci de l’avoir installé, et bonnes aventures !';
+const note = 'Bienvenue sur la banquise !';
+const thanks = 'Ce petit pingouin est ravi de vous tenir compagnie pendant que vous codez.';
+const wish = 'Merci de tout cœur de l’avoir installé : on va bien s’amuser ensemble !';
 
 test('intro shows the KK LAB mascot, large enough to read and centered, with its note below', () => {
   const splash = introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain);
@@ -27,7 +27,7 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
       for (const line of frame) assert.ok([...line].length <= cols, `${cols}x${rows}: ${line}`);
     }
   }
-  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('et bonnes aventures !'), 'the note wraps on narrow terminals');
+  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('on va bien s’amuser ensemble !'), 'the note wraps on narrow terminals');
   // The mascot draws itself (outline, then fill), then the signature and the note type in.
   assert.ok(art(introFrame(0.4)) < art(introFrame(1)));
   assert.ok(art(introFrame(1)) < art(introFrame(2)));

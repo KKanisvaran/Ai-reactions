@@ -23,9 +23,9 @@ interface IntroInput {
 
 /** The note, one sentence per line; on a narrow terminal, a sentence wraps between its pieces. */
 const NOTE = [
-  ['Bienvenue sur la banquise.'],
-  ['Ce petit pingouin est là', 'pour vous tenir compagnie', 'pendant que vous codez.'],
-  ['Merci de l’avoir installé,', 'et bonnes aventures !'],
+  ['Bienvenue sur la banquise !'],
+  ['Ce petit pingouin est ravi', 'de vous tenir compagnie', 'pendant que vous codez.'],
+  ['Merci de tout cœur', 'de l’avoir installé :', 'on va bien s’amuser ensemble !'],
 ];
 const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
 /** The note's lines on a terminal `cols` wide; `last` ends a sentence. */
