@@ -39,25 +39,31 @@ ni recouvrir l’IA.
 
 ## Installation
 
-Prérequis : **Node.js 24+** et une IA en ligne de commande (Codex, Claude Code ou Gemini CLI).
+Prérequis : **[Node.js](https://nodejs.org) 24 ou plus récent** et une IA en
+ligne de commande (Codex, Claude Code ou Gemini CLI). Puis, dans un terminal :
 
 ```sh
-npm install -g --allow-scripts=node-pty https://github.com/KKanisvaran/Ai-reactions/archive/refs/heads/main.tar.gz
+npm install -g ai-reactions
 ai-reactions codex     # lance Codex avec le pingouin (ou : ai-reactions claude / gemini)
 ```
 
-Sans npm récent, retire `--allow-scripts=node-pty`. Autre méthode : `git clone`
-du dépôt puis `npm install -g --install-links ./Ai-reactions`.
+C’est tout : rien à configurer, rien à télécharger d’autre. Pour l’essayer sans
+rien installer durablement : `npx ai-reactions codex`.
 
-Depuis les sources, sans installation globale : `npm run ai -- codex` (sous
-Windows PowerShell : `npm.cmd run ai -- codex`). Le `--` transmet `codex` au
-lanceur plutôt qu’à npm.
-
-| Système | Pris en charge |
+| Système | Installation |
 | --- | --- |
-| Windows 10 1809+ / 11 | Oui |
-| macOS | Oui |
-| Linux | Oui. `node-pty` se compile : `python3`, `make`, `g++` |
+| Windows 10 1809+ / 11 | `npm install -g ai-reactions` |
+| macOS | `npm install -g ai-reactions` |
+| Linux | `npm install -g --allow-scripts=node-pty ai-reactions`, avec `python3`, `make` et `g++` : le terminal virtuel s’y compile |
+
+Sous Windows et macOS, npm peut prévenir que `node-pty` a des scripts
+d’installation non autorisés : c’est sans conséquence, ses binaires sont déjà
+fournis. Sous Windows, si PowerShell refuse de lancer `npm` ou `ai-reactions`
+(scripts désactivés sur le système), tape `npm.cmd` et `ai-reactions.cmd`.
+
+Depuis les sources : `git clone` du dépôt, `npm ci`, puis `npm run ai -- codex`
+(sous Windows PowerShell : `npm.cmd run ai -- codex`). Le `--` transmet `codex`
+au lanceur plutôt qu’à npm.
 
 Désinstallation : `npm uninstall -g ai-reactions`.
 

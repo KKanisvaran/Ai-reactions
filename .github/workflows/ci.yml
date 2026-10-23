@@ -27,3 +27,26 @@ jobs:
         shell: bash
         run: git diff --exit-code -- dist/ || (echo "Run npm run build and commit dist/." && exit 1)
       - run: npm audit --audit-level=high
+      # Installed the way users install it, from the package npm would publish.
+      - name: Install the package like a user
+        shell: bash
+        run: |
+          npm pack --pack-destination "$RUNNER_TEMP"
+          scripts=$([ "$RUNNER_OS" = Linux ] && echo --allow-scripts=node-pty || true)
+          npm install -g $scripts "$RUNNER_TEMP"/ai-reactions-*.tgz
+          ai-reactions --version
+          ai-reactions --help
+      - name: Its terminal works once installed
+        shell: bash
+        run: |
+          cd "$(npm root -g)/ai-reactions"
+          node --input-type=module -e "
+            import pty from 'node-pty';
+            import { ensureSpawnHelper } from './scripts/pty-helper.mjs';
+            ensureSpawnHelper();
+            const [file, args] = process.platform === 'win32' ? ['cmd.exe', ['/c', 'echo pty-ok']] : ['/bin/sh', ['-c', 'echo pty-ok']];
+            const child = pty.spawn(file, args, { cols: 40, rows: 5, useConptyDll: true });
+            let out = '';
+            child.onData((data) => { out += data; });
+            child.onExit(({ exitCode }) => { console.log(out.trim()); process.exit(out.includes('pty-ok') && exitCode === 0 ? 0 : 1); });
+          "
