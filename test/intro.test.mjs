@@ -5,7 +5,7 @@ import { imagesAllowed, mascotSixel, parseGraphics } from '../dist/mascot-render
 
 const plain = (line) => line.replace(/\x1b\[[0-9;]*m/g, '');
 const art = (frame) => frame.map(plain).join('').split(/[▀▄]/).length - 1;
-const note = 'Ce projet a été créé par pur plaisir, et dédié à celles et ceux qui le téléchargent.';
+const note = 'J’ai créé ce projet par pur plaisir, en pensant à vous.';
 const thanks = 'Merci du fond du cœur : vous me donnez la force de continuer.';
 const wish = 'J’espère sincèrement qu’il vous plaira.';
 
@@ -36,7 +36,7 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
   // Small terminals, like a VS Code panel, get the signature and the note, never a blurred mascot.
   const small = introFrame(SPLASH_FOR - 0.5, 80, 14).map(plain);
   assert.equal(art(small), 0);
-  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('qui le téléchargent.')) && small.some((line) => line.includes(wish)));
+  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('en pensant à vous.')) && small.some((line) => line.includes(wish)));
 });
 
 test('the note types itself in order, slowly enough to read, then says how to skip', () => {

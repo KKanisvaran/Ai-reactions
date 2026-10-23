@@ -23,7 +23,7 @@ interface IntroInput {
 
 /** The note, one sentence per line; on a narrow terminal, a sentence wraps between its pieces. */
 const NOTE = [
-  ['Ce projet a été créé', 'par pur plaisir,', 'et dédié à celles et ceux', 'qui le téléchargent.'],
+  ['J’ai créé ce projet', 'par pur plaisir,', 'en pensant à vous.'],
   ['Merci du fond du cœur :', 'vous me donnez la force', 'de continuer.'],
   ['J’espère sincèrement', 'qu’il vous plaira.'],
 ];
