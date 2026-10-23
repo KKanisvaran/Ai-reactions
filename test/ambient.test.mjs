@@ -292,6 +292,11 @@ test('every episode plays whole at every width it fits: the narrator never cut, 
     assert.ok(shown > 0, `${story.id}: its narrator speaks`);
     // A line in quotes is someone speaking: it must say who.
     for (const beat of story.beats) assert.ok(beat.who || !/^«/.test(beat.say), `${story.id}: « ${beat.say} » needs its speaker`);
+    // Every line stays long enough to be typed, then read.
+    for (const beat of story.beats) {
+      const typed = ([...beat.say].length + (beat.who ? beat.who.length + 5 : 0)) / 40, read = [...beat.say].length / 15;
+      assert.ok(beat.for >= 0.8 + typed + read - 0.5, `${story.id}: « ${beat.say} » shows ${beat.for} s, needs ${(0.8 + typed + read).toFixed(1)} s`);
+    }
   }
 });
 
