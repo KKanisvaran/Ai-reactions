@@ -14,6 +14,9 @@ test('real PTY launcher: the penguin reacts on its own below the AI, input is fo
   });
   let output = '', errors = '';
   const exited = once(child, 'close');
+  // Decoded as a stream: a multibyte character (« … ») may straddle two chunks.
+  child.stdout.setEncoding('utf8');
+  child.stderr.setEncoding('utf8');
   child.stdout.on('data', (data) => { output += data; });
   child.stderr.on('data', (data) => { errors += data; });
   t.after(() => { if (child.exitCode === null) child.kill(); });
@@ -21,7 +24,8 @@ test('real PTY launcher: the penguin reacts on its own below the AI, input is fo
   assert.equal(exitCode, 0, errors + output.slice(-3000));
   assert.match(output, /SESSION_READY/, 'the child runs interactively');
   // A permission prompt, then an interruption: suspense, then a facepalm.
-  for (const caption of ['Hmm… louche.', 'Bruh.']) assert.ok(output.includes(caption), `band caption ${caption}`);
+  const plain = output.replace(/\[[0-9;?]*[A-Za-z]/g, '');
+  for (const caption of ['Hmm… louche.', 'Bruh.']) assert.ok(output.includes(caption), `band caption ${caption}: ${plain.slice(-1500)}`);
   assert.match(output, /Interrupted by user/, 'the AI stays on screen');
   assert.match(output, /SESSION_DONE/);
   assert.match(output, /WORK_[4-9]\d/, 'AI output keeps flowing');
