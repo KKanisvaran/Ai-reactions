@@ -28,14 +28,14 @@ const NOTE = [
   ['J’espère sincèrement', 'qu’il vous plaira.'],
 ];
 const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
-/** The note's lines on a terminal `cols` wide. */
-function noteLines(cols: number): string[] {
+/** The note's lines on a terminal `cols` wide; `last` ends a sentence. */
+function noteLines(cols: number): { text: string; last: boolean }[] {
   return NOTE.flatMap((pieces) => pieces.reduce<string[]>((lines, piece) => {
     const joined = lines.length ? `${lines.at(-1)} ${piece}` : piece;
     if (lines.length && [...joined].length <= cols - 2) lines[lines.length - 1] = joined;
     else lines.push(piece);
     return lines;
-  }, []));
+  }, []).map((text, i, all) => ({ text, last: i === all.length - 1 })));
 }
 /** The splash needs room for its note, and for the mascot when it fits. */
 const SPLASH_MIN = { cols: 30, rows: 13 };
@@ -44,10 +44,16 @@ const DRAW = 1.6;
 const IMAGE_AT = DRAW;
 const SIGN_AT = DRAW + 0.2;
 const NOTE_AT = SIGN_AT + 0.5;
-const NOTE_SPEED = 60;
-/** The splash closes on its own once the note is read. */
-export const SPLASH_FOR = NOTE_AT + [...NOTE_TEXT].length / NOTE_SPEED + 1.8;
-/** Text lines under the mascot: a gap, the signature, the note and a margin. */
+/** Characters a second the note types itself at: a calm reading pace. */
+const NOTE_SPEED = 30;
+/** A breath after each sentence; time to read the last one before the splash closes. */
+const SENTENCE_PAUSE = 0.7, READ_AT_END = 4.5;
+/** Seconds the whole note takes to type, its pauses included. */
+const NOTE_TYPING = [...NOTE_TEXT].length / NOTE_SPEED + SENTENCE_PAUSE * (NOTE.length - 1);
+/** The splash closes on its own once the note is read; a key skips it. */
+export const SPLASH_FOR = NOTE_AT + NOTE_TYPING + READ_AT_END;
+const SKIP = 'une touche pour passer';
+/** Text lines under the mascot: a gap, the signature, the note and the line that says how to skip. */
 const below = (cols: number) => 3 + noteLines(cols).length;
 /** The real image stays small: at most this many lines tall. */
 const MASCOT_LINES = 12;
@@ -89,13 +95,14 @@ function splashFrame(seconds: number, cols: number, rows: number, graphics?: Ter
     for (const line of mascotBlocks(box.width, box.lines, Math.min(1, seconds / DRAW))) lines.push(`${' '.repeat(box.left)}${line}`);
   }
   lines.push('', seconds >= SIGN_AT ? center(`${DIM}by ${AMBER}KK LAB${RESET}`, 9, cols) : '');
-  const note = noteLines(cols);
-  let typed = Math.max(0, Math.floor((seconds - NOTE_AT) * NOTE_SPEED));
-  for (const line of note) {
-    const shown = [...line].slice(0, typed);
-    typed -= shown.length + 1;
-    lines.push(shown.length ? center(`${TEXT}${shown.join('')}${RESET}`, [...line].length, cols) : '');
+  // One line after the other, in order, with a breath at the end of each sentence.
+  let clock = seconds - NOTE_AT;
+  for (const { text, last } of noteLines(cols)) {
+    const chars = [...text], shown = Math.max(0, Math.min(chars.length, Math.floor(clock * NOTE_SPEED)));
+    lines.push(shown ? center(`${TEXT}${chars.slice(0, shown).join('')}${RESET}`, chars.length, cols) : '');
+    clock -= (chars.length + 1) / NOTE_SPEED + (last ? SENTENCE_PAUSE : 0);
   }
+  lines.push(seconds >= NOTE_AT + NOTE_TYPING + 0.6 ? center(`${DIM}${SKIP}${RESET}`, SKIP.length, cols) : '');
   return lines;
 }
 

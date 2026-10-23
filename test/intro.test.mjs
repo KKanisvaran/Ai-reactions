@@ -39,6 +39,30 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
   assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('qui le téléchargent.')) && small.some((line) => line.includes(wish)));
 });
 
+test('the note types itself in order, slowly enough to read, then says how to skip', () => {
+  const sentences = [note, thanks, wish];
+  for (const [cols, rows] of [[120, 34], [80, 24], [50, 22]]) {
+    let finished = -1;
+    const noteOf = (frame) => frame.slice(frame.findIndex((line) => line.includes('by KK LAB')) + 1, -1).map((line) => line.trim());
+    const whole = noteOf(introFrame(SPLASH_FOR - 0.1, cols, rows).map(plain));
+    for (let t = 0; t < SPLASH_FOR; t += 0.05) {
+      const frame = introFrame(t, cols, rows).map(plain);
+      if (!frame.some((line) => line.includes('by KK LAB'))) continue;
+      const lines = noteOf(frame);
+      // A line only starts once the one before it is complete: nothing shows after the line being typed.
+      const typing = lines.findIndex((line, i) => line !== whole[i]);
+      if (typing >= 0) lines.slice(typing + 1).forEach((line) => assert.equal(line, '', `${cols}x${rows} at ${t.toFixed(2)}s: « ${line} » before « ${whole[typing]} » is done`));
+      lines.forEach((line, i) => assert.ok(whole[i].startsWith(line), `${cols}x${rows} at ${t.toFixed(2)}s: « ${line} »`));
+      if (finished < 0 && lines.join(' ').includes(wish)) finished = t;
+    }
+    assert.ok(finished > 0 && SPLASH_FOR - finished >= 4, `${cols}x${rows}: ${(SPLASH_FOR - finished).toFixed(1)} s left to read it`);
+  }
+  const typing = introFrame(SPLASH_FOR - 9, 120, 34).map(plain).join('\n');
+  assert.ok(sentences.some((sentence) => !typing.includes(sentence)), 'still typing midway');
+  assert.match(introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain).join('\n'), /une touche pour passer/);
+  assert.doesNotMatch(introFrame(4, 120, 34).map(plain).join('\n'), /une touche pour passer/, 'the hint waits for the note');
+});
+
 test('Sixel terminals get the real mascot image, centered and sized from their cells', () => {
   assert.equal(parseGraphics('\x1b[6;20;10t'), undefined, 'waits for the device attributes');
   assert.deepEqual(parseGraphics('\x1b[6;20;10t\x1b[?61;4;6;7;14;21;22;23;24;28;32;42c'), { sixel: true, cell: { height: 20, width: 10 } });
