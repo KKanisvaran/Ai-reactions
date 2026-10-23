@@ -15,17 +15,17 @@ glace… Et il te répond quand tu cliques dessus. Rien à configurer, rien à
 taper : il comprend tout seul ce qui se passe, et ne vient jamais interrompre
 ni recouvrir l’IA.
 
-> **Créé par pur plaisir.** Ce projet est dédié à celles et ceux qui le
-> téléchargent. Merci du fond du cœur : vous me donnez la force de continuer.
-> J’espère sincèrement qu’il vous plaira.
+> **Créé par pur plaisir.** J’ai créé ce projet en pensant à vous. Merci du
+> fond du cœur : vous me donnez la force de continuer. J’espère sincèrement
+> qu’il vous plaira.
 
-![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Gaspard nourrissant son bébé, l’étoile rendue au ciel par un ballon, la fête de Flocon](docs/penguin-band.png)
+![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Nounours l’ours qui demande au pingouin d’être son ami, une balade sur le dos de Bernadette la baleine, l’aurore boréale](docs/penguin-band.png)
 
 *Le bandeau tel que le dessine le programme, dans quatre de ses histoires :
-« La pêche », « Le voleur », « L’étoile » et « Flocon ».*
+« La pêche », « L’ours », « La baleine » et « L’aurore ».*
 
 - **Un compagnon vivant** : 44 poses reprises pixel pour pixel de trois planches
-  de dessin, 15 petites histoires racontées par un narrateur, et des réponses à
+  de dessin, 19 petites histoires racontées par un narrateur, et des réponses à
   tes clics, toujours gentilles.
 - **Il comprend tout seul** : ses réactions viennent de ce qu’affiche l’IA,
   sans mot-clé, sans prompt et sans configuration.
@@ -89,15 +89,23 @@ est silencieux : le pingouin ne fait jamais de bruit.
 ## Le pingouin compagnon
 
 **Quand tout est calme, il raconte des histoires.** Des épisodes de 20 à 45
-secondes, comme un petit dessin animé, avec un narrateur qui écrit chaque plan
-sur la ligne de texte du bandeau, à la façon des cartons d’un film muet. Chaque
-histoire a son enjeu, son rebondissement et sa chute, et on y retrouve sa bande
-d’amis :
+secondes, comme un petit dessin animé. Chaque histoire a son enjeu, son
+rebondissement et sa chute, et on y retrouve sa bande d’amis :
 
-- **Gaspard**, la mouette gourmande au grand cœur ;
+- **Gaspard**, la mouette gourmande au grand cœur, et son bébé ;
 - **Bulle**, le poisson orange qui adore faire des farces ;
 - **Flocon**, le bonhomme de neige timide, souvent seul ;
+- **Nounours**, l’ours polaire, énorme et tout doux ;
+- **Pistache**, le phoque jongleur ;
+- **Bernadette**, la baleine qui fait des balades en mer ;
 - et une étoile filante qui a perdu son chemin.
+
+On sait toujours qui parle : chaque épisode s’ouvre sur son titre, seul, comme
+un carton (« ÉPISODE : LA PÊCHE ») ; le narrateur écrit ensuite chaque plan en
+blanc, sans nom devant ; quand un personnage parle, son nom apparaît en orange
+devant sa réplique (« Gaspard : « Pardon… elle est vraiment belle. » »). Le
+premier épisode de chaque session, « Les amis », présente la bande un par un, et
+chaque épisode rappelle qui est qui la première fois qu’un ami apparaît.
 
 | Épisode | L’histoire |
 | --- | --- |
@@ -116,16 +124,20 @@ d’amis :
 | Le fantôme | Une histoire qui fait peur, une ombre aux yeux jaunes… |
 | La partie | Une boule de neige volée, puis une partie à trois |
 | La baignade | Un bain de minuit, avec Bulle pour compagnie |
+| L’ours | Des pas lourds, un ours polaire… qui n’a que faim |
+| La baleine | Un jet d’eau géant, et une balade sur le dos de Bernadette |
+| Le phoque | Une boule de neige sur le nez, sur la tête, puis à deux |
+| L’aurore | Le ciel s’allume en vert et violet, et tout le monde vient admirer |
 
-Chaque session les raconte toutes dans un ordre différent avant d’en raconter
-une deuxième fois. Entre deux épisodes, il cligne des yeux, regarde autour de
+Après « Les amis », chaque session les raconte toutes dans un ordre différent
+avant d’en raconter une deuxième fois, soit plus de dix minutes d’histoires. Entre deux épisodes, il cligne des yeux, regarde autour de
 lui, salue ou se promène. **L’IA passe toujours en premier** : dès qu’elle se met
 au travail, l’épisode se met en pause, et il reprend au début du plan quand elle
 a fini (après une longue absence, il recommence depuis le début). En pleine
 baignade, il rentre à la nage au lieu de disparaître de l’eau.
 
-Les histoires ont besoin d’un peu de place : 8 épisodes à partir de 60
-colonnes, 14 à 80, et Flocon à partir de 100. Dans un terminal plus étroit, le
+Les histoires ont besoin d’un peu de place : 10 épisodes à partir de 60
+colonnes, 18 à 80, et Flocon à partir de 100. Dans un terminal plus étroit, le
 pingouin s’occupe à sa façon : il lit, peint, jongle, chante, joue de la
 guitare…
 
@@ -221,7 +233,7 @@ raconter de vraies histoires, avec ses amis.
   réponses aux clics ; ses 44 poses ; sa nuit polaire (ciel en dégradé, étoiles
   qui scintillent, lune, montagnes, mer qui miroite, banquise, bonhomme de
   neige, petite neige) ; les réactions en pixel art et leurs légendes.
-- **Histoires** (`src/stories.ts`, `src/cast.ts`) : les 15 épisodes, plan par
+- **Histoires** (`src/stories.ts`, `src/cast.ts`) : les 19 épisodes et « Les amis », plan par
   plan (ce que dit le narrateur, ce que fait le pingouin, ce que font les
   autres), et les amis du pingouin dessinés à l’échelle du bandeau. Une frame
   d’épisode coûte environ 0,1 ms et envoie en moyenne 0,2 Ko au terminal.

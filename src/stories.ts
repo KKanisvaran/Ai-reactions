@@ -7,7 +7,7 @@
 import { SWIM, beat, drawActivity, ease, swimFrame, waddle } from './companion.ts';
 import type { Frame } from './companion.ts';
 import { FLOE, backdrop } from './decor.ts';
-import { boom, chick, dot, fish, flower, gift, gull, gullHead, heart, igloo, mirror, note, note2, photo, put, shadow, shell, shootingStar, smallFish, smoke, star, zed } from './cast.ts';
+import { aurora, bear, boom, chick, dot, fish, flower, gift, gull, gullHead, heart, igloo, mirror, note, note2, photo, put, shadow, shell, shootingStar, smallFish, seal, smoke, star, whale, zed } from './cast.ts';
 import { PENGUIN_WIDTH, penguinPalette, penguinPoses, penguinProps } from './penguin.ts';
 import type { Pose } from './penguin.ts';
 
@@ -33,7 +33,10 @@ type Draw = (place: StoryPlace, s: number, u: number) => void;
 export interface Beat {
   /** Seconds it lasts. */
   for: number;
+  /** What the narrator says, or, with `who`, what that character says. */
   say: string;
+  /** The character speaking this line; none for the narrator. */
+  who?: string;
   /** The penguin, `s` seconds into the shot, `u` from 0 to 1 along it. */
   penguin: (s: number, u: number) => Frame;
   /** Drawn behind the penguin. */
@@ -49,6 +52,8 @@ export interface Beat {
 export interface Story {
   id: string;
   title: string;
+  /** Told first, once a session: it introduces the friends. */
+  opening?: boolean;
   /** Pixels it needs to the right of the penguin's place. */
   room: number;
   /** It needs Flocon, who only fits in a band 100 columns wide. */
@@ -256,7 +261,36 @@ function iglooRising(place: StoryPlace, x: number, u: number, glow = 0): void {
 
 const L = (place: StoryPlace, dx: number) => place.left + dx;
 
+/** The friends, one after the other, so everyone knows who is who; Flocon when he is there. */
+function friends(withFlocon: boolean): Story {
+  const ice40 = (p: StoryPlace) => ice(p, p.floe - 1, L(p, 42));
+  return {
+    id: withFlocon ? 'amis' : 'amis-sans-flocon', title: 'Les amis', room: 60, snowman: withFlocon, opening: true,
+    beats: [
+      { for: 4.5, say: 'Ce soir, il te présente ses amis !', penguin: bounce('waving', 2) },
+      {
+        for: 5, say: 'Voici Gaspard, la mouette gourmande.', penguin: pose('right'),
+        draw: (p, s, u) => { ice40(p); if (u < 0.6) flight(p, s, part(u, 0, 0.6), p.width, 4, L(p, 30), 9); else { standing(p, L(p, 30), beat(s, 1.5) === 1); sparkles(p, L(p, 34), 9, s, 5); } },
+      },
+      {
+        for: 5, say: 'Puis Bulle, le poisson farceur !', penguin: startle('surprised'),
+        draw: (p, s, u) => { ice40(p); standing(p, L(p, 30)); leap(p, part(u, 0.05, 0.6), L(p, 56), L(p, 46), 10, true); if (u > 0.6) swimming(p, L(p, 46)); },
+      },
+      ...(withFlocon ? [{
+        for: 5, say: 'Et Flocon, le bonhomme de neige.', penguin: pose('left'),
+        draw: (p: StoryPlace, s: number) => { ice40(p); standing(p, L(p, 30)); swimming(p, L(p, 46)); flocon(p, 'dance', s); sparkles(p, (p.snowman ?? 0) + 4, 11, s, 6); },
+      }] : []),
+      {
+        for: 5, say: 'Que les aventures commencent !', penguin: alternate('dancing', 'happy'),
+        draw: (p, s) => { ice40(p); flying(p, L(p, 30), 6 + beat(s, 3), s); leap(p, (s % 1.6) / 1.6, L(p, 56), L(p, 48), 8); flocon(p, 'happy'); hearts(p, L(p, 20), 8, s); },
+      },
+    ],
+  };
+}
+
 export const stories: Story[] = [
+  friends(true),
+  friends(false),
   {
     // A prank, a catch, a choice, and a friend for life.
     id: 'peche', title: 'La pêche', room: 58,
@@ -265,7 +299,7 @@ export const stories: Story[] = [
       { for: 4, say: 'Il attend… il attend encore…', penguin: pose('fishing'), draw: (p, s, u) => swimming(p, lerp(p.width - 4, L(p, 44), u)) },
       { for: 3.5, say: 'Une ombre file sous le bouchon !', penguin: pose('fishing'), dip: (s) => beat(s, 3), draw: (p, s, u) => swimming(p, lerp(L(p, 44), L(p, 33), u)) },
       {
-        for: 3.5, say: 'Plouf ! Bulle lui arrose le bec !', penguin: startle('fishing'),
+        for: 3.5, say: 'Plouf ! Bulle le poisson l’arrose !', penguin: startle('fishing'),
         draw: (p, s, u) => {
           leap(p, part(u, 0, 0.5), L(p, 36), L(p, 30), 6);
           // A fan of water, blue so it stands out from the snow, lands on its head…
@@ -335,7 +369,7 @@ export const stories: Story[] = [
         },
       },
       {
-        for: 5, say: '« Merci ! » Et ils dînent ensemble.', penguin: bounce('feasting', 1.5),
+        for: 5, who: 'Gaspard', say: 'Merci ! Bon appétit, l’ami !', penguin: bounce('feasting', 1.5),
         draw: (p, s) => { nest(p); put(p.canvas, chick, L(p, 59), FLOE - chick.length); ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 30), beat(s, 2) === 1); hearts(p, L(p, 26), 7, s); },
       },
     ],
@@ -372,7 +406,7 @@ export const stories: Story[] = [
           put(p.canvas, star.head, x + 1, y + 14);
         },
       },
-      { for: 5, say: '« Merci ! » scintille tout le ciel.', penguin: alternate('happy', 'dancing', 3, 6), draw: (p, s) => starry(p, s * 2) },
+      { for: 5, say: 'Tout le ciel scintille de joie.', penguin: alternate('happy', 'dancing', 3, 6), draw: (p, s) => starry(p, s * 2) },
       { for: 3.5, say: 'Il rentre, le cœur léger.', penguin: walk(6, 0, 3.5, 'left'), draw: (p, s) => hearts(p, L(p, 18), 7, s, 1) },
     ],
   },
@@ -385,10 +419,10 @@ export const stories: Story[] = [
       { for: 3, say: 'Une idée !', penguin: startle('idea'), behind: (p, s) => put(p.canvas, penguinProps.bulb, L(p, 18), s < 0.2 ? 1 : 0, penguinPalette), draw: (p, s) => flocon(p, 'sad', s) },
       { for: 5, say: 'Une chanson, rien que pour lui.', penguin: pose('guitar'), draw: (p, s) => { flocon(p, 'sad', s); notes(p, L(p, -1), 10, s, -1); } },
       {
-        for: 4.5, say: 'Gaspard l’entend et vient se poser…', penguin: pose('guitar'),
+        for: 4.5, say: 'Gaspard la mouette vient se poser…', penguin: pose('guitar'),
         draw: (p, s, u) => { flocon(p, 'sad', s); notes(p, L(p, -1), 10, s, -1); ice(p, p.floe - 1, L(p, 42)); if (u < 0.7) flight(p, s, part(u, 0, 0.7), p.width, 4, L(p, 31), 9); else standing(p, L(p, 31)); },
       },
-      { for: 4, say: 'Bulle sort la tête de l’eau !', penguin: pose('guitar'), draw: (p, s, u) => { flocon(p, 'sad', s); notes(p, L(p, -1), 10, s, -1); ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31)); leap(p, part(u, 0.1, 0.7), L(p, 54), L(p, 46), 9, true); } },
+      { for: 4, say: 'Bulle le poisson sort la tête !', penguin: pose('guitar'), draw: (p, s, u) => { flocon(p, 'sad', s); notes(p, L(p, -1), 10, s, -1); ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31)); leap(p, part(u, 0.1, 0.7), L(p, 54), L(p, 46), 9, true); } },
       { for: 4, say: 'Flocon sourit enfin !', penguin: pose('guitar'), draw: (p, s) => { flocon(p, 'happy'); notes(p, L(p, -1), 10, s, -1); ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31), true); hearts(p, (p.snowman ?? 0) + 2, 6, s, 1); } },
       {
         for: 6, say: 'Une vraie fête, entre amis.', penguin: alternate('dancing', 'happy'),
@@ -407,7 +441,7 @@ export const stories: Story[] = [
       { for: 3.5, say: 'Ta-da ! Une maison toute neuve !', penguin: startle('happy'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 46)); iglooRising(p, L(p, 29), 1); sparkles(p, L(p, 36), 9, s, 7); } },
       { for: 4, say: 'Il veut entrer… il est trop gros !', penguin: walk(0, 6, 2, 'right'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 46)); iglooRising(p, L(p, 29), 1); if (u > 0.55) { sweat(p, s, 6); exclaim(p, 6); } } },
       {
-        for: 4.5, say: 'Gaspard, lui, s’y glisse sans souci.', penguin: pose('facepalm', 6),
+        for: 4.5, say: 'Gaspard la mouette, lui, s’y glisse !', penguin: pose('facepalm', 6),
         draw: (p, s, u) => {
           ice(p, p.floe - 1, L(p, 46)); iglooRising(p, L(p, 29), 1, 1);
           if (u < 0.7) flight(p, s, part(u, 0, 0.7), p.width, 5, L(p, 35), 12);
@@ -426,7 +460,7 @@ export const stories: Story[] = [
     beats: [
       { for: 4.5, say: 'Ce soir, il peint la lune.', penguin: pose('painting'), draw: (p, s) => sparkles(p, p.width - 12, 3, s, 3) },
       { for: 4, say: 'La lune pose pour lui, bien sage.', penguin: pose('painting'), draw: (p, s) => sparkles(p, p.width - 12, 3, s, 4) },
-      { for: 4, say: 'Gaspard vient donner son avis…', penguin: pose('painting'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); if (u < 0.75) flight(p, s, part(u, 0, 0.75), p.width, 5, L(p, 27), 9); else standing(p, L(p, 27)); } },
+      { for: 4, say: 'Gaspard la mouette donne son avis…', penguin: pose('painting'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); if (u < 0.75) flight(p, s, part(u, 0, 0.75), p.width, 5, L(p, 27), 9); else standing(p, L(p, 27)); } },
       {
         for: 3.5, say: 'Oups ! Un coup d’aile, et tout gicle !', penguin: startle('painting'),
         draw: (p, s, u) => {
@@ -449,7 +483,7 @@ export const stories: Story[] = [
     // Too late, too early, just right.
     id: 'photo', title: 'La photo', room: 56,
     beats: [
-      { for: 4, say: 'Il rêve d’une photo de Bulle.', penguin: pose('photographing'), draw: (p, s, u) => swimming(p, lerp(L(p, 50), L(p, 38), u)) },
+      { for: 4, say: 'Il rêve de photographier Bulle le poisson.', penguin: pose('photographing'), draw: (p, s, u) => swimming(p, lerp(L(p, 50), L(p, 38), u)) },
       { for: 3.5, say: 'Clic !… Trop tard, il a plongé.', penguin: pose('photographing'), draw: (p, s, u) => { leap(p, part(u, 0, 0.6), L(p, 44), L(p, 36), 8); if (u > 0.75 && u < 0.85) flash(p, L(p, 18), 9); } },
       { for: 3, say: 'Il faut être plus rapide…', penguin: pose('photographing'), draw: (p, s) => sweat(p, s) },
       { for: 3.5, say: 'Clic !… Trop tôt, cette fois !', penguin: pose('photographing'), draw: (p, s, u) => { if (u > 0.08 && u < 0.18) flash(p, L(p, 18), 9); leap(p, part(u, 0.35, 0.95), L(p, 36), L(p, 46), 8); } },
@@ -469,11 +503,11 @@ export const stories: Story[] = [
     id: 'concert', title: 'Le concert', room: 62,
     beats: [
       { for: 4.5, say: 'Un concert… pour personne.', penguin: pose('guitar'), draw: (p, s) => notes(p, L(p, 18), 9, s) },
-      { for: 4.5, say: 'Ah si ! Gaspard s’installe.', penguin: pose('guitar'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 42)); notes(p, L(p, 18), 9, s); if (u < 0.7) flight(p, s, part(u, 0, 0.7), p.width, 4, L(p, 31), 9); else standing(p, L(p, 31)); } },
-      { for: 4.5, say: 'Puis Bulle, qui saute en rythme !', penguin: pose('guitar'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); notes(p, L(p, 18), 9, s); standing(p, L(p, 31), beat(s, 2) === 1); leap(p, (s % 1.5) / 1.5, L(p, 56), L(p, 48), 7); } },
+      { for: 4.5, say: 'Ah si ! Gaspard la mouette s’installe.', penguin: pose('guitar'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 42)); notes(p, L(p, 18), 9, s); if (u < 0.7) flight(p, s, part(u, 0, 0.7), p.width, 4, L(p, 31), 9); else standing(p, L(p, 31)); } },
+      { for: 4.5, say: 'Puis Bulle le poisson, en rythme !', penguin: pose('guitar'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); notes(p, L(p, 18), 9, s); standing(p, L(p, 31), beat(s, 2) === 1); leap(p, (s % 1.5) / 1.5, L(p, 56), L(p, 48), 7); } },
       { for: 5, say: 'Et maintenant, tout le monde chante !', penguin: alternate('singing', 'pleased', 2.5), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); notes(p, L(p, 14), 7, s); standing(p, L(p, 31), beat(s, 2) === 1); leap(p, ((s + 0.7) % 1.5) / 1.5, L(p, 48), L(p, 56), 7); } },
       { for: 5, say: 'Quelle ambiance sur la banquise !', penguin: alternate('dancing', 'happy'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); flying(p, L(p, 30), 6 + beat(s, 3), s); notes(p, L(p, 18), 8, s); leap(p, (s % 1.2) / 1.2, L(p, 56), L(p, 48), 9); } },
-      { for: 4, say: 'Merci, vous êtes adorables !', penguin: startle('pleased'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31), true); hearts(p, L(p, 18), 7, s); } },
+      { for: 4, who: 'Le pingouin', say: 'Merci, vous êtes adorables !', penguin: startle('pleased'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31), true); hearts(p, L(p, 18), 7, s); } },
     ],
   },
   {
@@ -485,9 +519,9 @@ export const stories: Story[] = [
       { for: 4, say: 'Une pousse ! Sur la banquise !', penguin: startle('gardening'), draw: (p, s) => { garden(p, s, 2); exclaim(p); } },
       { for: 4.5, say: 'Une fleur, la toute première ici.', penguin: pose('gardening'), draw: (p, s) => { garden(p, s, 3, false); sparkles(p, L(p, 32), 11, s, 5); } },
       { for: 4, say: 'Il en tombe amoureux.', penguin: bounce('love', 1), draw: (p, s) => { garden(p, s, 3, false); hearts(p, L(p, 16), 6, s, 1); } },
-      { for: 3.5, say: 'Mais Gaspard a faim… de fleurs !', penguin: startle('surprised'), draw: (p, s, u) => { garden(p, s, 3, false); flight(p, s, u, p.width, 4, L(p, 36), 8); exclaim(p); } },
-      { for: 4.5, say: 'Halte-là ! Le héros protège sa fleur !', penguin: startle('hero'), draw: (p, s) => { garden(p, s, 3, false); flying(p, L(p, 36), 7 + beat(s, 2), s); } },
-      { for: 5, say: '« Pardon… elle est vraiment belle. »', penguin: pose('pleased'), draw: (p, s) => { garden(p, s, 3, false); ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 35), true); hearts(p, L(p, 30), 7, s); } },
+      { for: 3.5, say: 'Gaspard la mouette a faim… de fleurs !', penguin: startle('surprised'), draw: (p, s, u) => { garden(p, s, 3, false); flight(p, s, u, p.width, 4, L(p, 36), 8); exclaim(p); } },
+      { for: 4.5, who: 'Le pingouin', say: 'Halte-là ! Pas touche à ma fleur !', penguin: startle('hero'), draw: (p, s) => { garden(p, s, 3, false); flying(p, L(p, 36), 7 + beat(s, 2), s); } },
+      { for: 5, who: 'Gaspard', say: 'Pardon… elle est vraiment belle.', penguin: pose('pleased'), draw: (p, s) => { garden(p, s, 3, false); ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 35), true); hearts(p, L(p, 30), 7, s); } },
     ],
   },
   {
@@ -501,16 +535,16 @@ export const stories: Story[] = [
         behind: (p, s) => { balloonBehind(p, s, 1); for (let y = 11; y < FLOE; y++) dot(p.canvas, L(p, 22) + (y > 15 ? 1 : 0), y, '9aa8ba'); },
       },
       {
-        for: 4.5, say: 'Soudain… Gaspard, avec un paquet !', penguin: startle('surprised'),
+        for: 4.5, say: 'Soudain, Gaspard la mouette et un paquet !', penguin: startle('surprised'),
         draw: (p, s, u) => {
           ice(p, p.floe - 1, L(p, 46));
           if (u < 0.75) { const e = part(u, 0, 0.75), x = lerp(p.width, L(p, 36), ease(e)), y = 4 + e * 2; flying(p, x, y, s); put(p.canvas, gift, Math.round(x) + 4, Math.round(y) + 7); }
           else { standing(p, L(p, 38)); put(p.canvas, gift, L(p, 29), Math.round(lerp(13, FLOE - gift.length, part(u, 0.75, 0.9)))); }
         },
       },
-      { for: 3, say: 'Pour moi ?!', penguin: startle('surprised'), draw: (p) => { ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 38)); put(p.canvas, gift, L(p, 29), FLOE - gift.length); exclaim(p); } },
+      { for: 3, who: 'Le pingouin', say: 'Pour moi ?!', penguin: startle('surprised'), draw: (p) => { ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 38)); put(p.canvas, gift, L(p, 29), FLOE - gift.length); exclaim(p); } },
       { for: 4.5, say: 'Il ouvre son cadeau…', penguin: bounce('gift', 1.5), draw: (p, s) => { ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 38), beat(s, 1) === 1); sparkles(p, L(p, 14), 9, s, 7); } },
-      { for: 5, say: 'Et Bulle saute pour la fête !', penguin: alternate('dancing', 'happy'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 38), beat(s, 2) === 1); leap(p, (s % 1.6) / 1.6, L(p, 60), L(p, 50), 9); confetti(p, s, L(p, 0), L(p, 60)); } },
+      { for: 5, say: 'Et Bulle le poisson saute de joie !', penguin: alternate('dancing', 'happy'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 46)); standing(p, L(p, 38), beat(s, 2) === 1); leap(p, (s % 1.6) / 1.6, L(p, 60), L(p, 50), 9); confetti(p, s, L(p, 0), L(p, 60)); } },
       { for: 5, say: 'Joyeux anniversaire, petit pingouin !', penguin: bounce('balloon', 1.5), caption: 3, behind: (p, s) => balloonBehind(p, s), draw: (p, s) => { ice(p, p.floe - 1, L(p, 46)); flying(p, L(p, 36), 7 + beat(s, 2), s); confetti(p, s, L(p, 0), L(p, 60)); hearts(p, L(p, 22), 8, s, 1); } },
     ],
   },
@@ -533,7 +567,7 @@ export const stories: Story[] = [
       },
       { for: 4.5, say: 'Il neige… des paillettes !', penguin: startle('surprised'), draw: (p, s) => confetti(p, s, L(p, 0), L(p, 34)) },
       { for: 4.5, say: 'Une expérience réussie… presque.', penguin: alternate('happy', 'dancing', 2), draw: (p, s) => confetti(p, s, L(p, 0), L(p, 34)) },
-      { for: 4, say: 'Personne n’a rien vu, hein ?', penguin: pose('innocent'), draw: (p, s) => { for (let i = 0; i < 3; i++) dot(p.canvas, L(p, 18 + i * 2), 4 - beat(s + i * 0.3, 2), 'd6e2ee'); } },
+      { for: 4, who: 'Le pingouin', say: 'Personne n’a rien vu, hein ?', penguin: pose('innocent'), draw: (p, s) => { for (let i = 0; i < 3; i++) dot(p.canvas, L(p, 18 + i * 2), 4 - beat(s + i * 0.3, 2), 'd6e2ee'); } },
     ],
   },
   {
@@ -541,9 +575,9 @@ export const stories: Story[] = [
     id: 'roi', title: 'Le roi', room: 50,
     beats: [
       { for: 4.5, say: 'Il trouve une couronne dans la neige.', penguin: pose('king'), draw: (p, s) => sparkles(p, L(p, 10), 3, s, 5) },
-      { for: 4, say: '« Je suis le roi de la banquise ! »', penguin: startle('hero') },
-      { for: 4.5, say: 'Gaspard s’incline… en pouffant.', penguin: pose('king'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 29), u > 0.3 && u < 0.8); } },
-      { for: 4, say: 'Bulle fait la révérence… à sa façon.', penguin: pose('king'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 29)); leap(p, part(u, 0, 0.8), L(p, 48), L(p, 42), 10, true); } },
+      { for: 4, who: 'Le pingouin', say: 'Je suis le roi de la banquise !', penguin: startle('hero') },
+      { for: 4.5, say: 'Gaspard la mouette s’incline, en pouffant.', penguin: pose('king'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 29), u > 0.3 && u < 0.8); } },
+      { for: 4, say: 'Bulle le poisson fait la révérence !', penguin: pose('king'), draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 29)); leap(p, part(u, 0, 0.8), L(p, 48), L(p, 42), 10, true); } },
       { for: 4.5, say: 'Premier décret : la fête pour tous !', penguin: alternate('dancing', 'happy'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 40)); flying(p, L(p, 30), 6 + beat(s, 3), s); confetti(p, s, L(p, 0), L(p, 50)); } },
       { for: 4.5, say: 'Un roi gentil, le meilleur des rois.', penguin: pose('pleased'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 40)); standing(p, L(p, 29)); hearts(p, L(p, 16), 6, s); } },
     ],
@@ -555,8 +589,8 @@ export const stories: Story[] = [
       { for: 4.5, say: 'Il lit une histoire de fantômes…', penguin: pose('reading') },
       { for: 4, say: 'Brrr… ça donne la chair de poule.', penguin: (s) => ({ pose: 'reading', dx: beat(s, 10), dy: 0 }), draw: (p, s) => sweat(p, s) },
       { for: 4, say: 'Une ombre approche dans la nuit…', penguin: pose('reading'), draw: (p, s, u) => ghost(p, Math.floor(s * 5) % 2 ? 'up' : 'down', Math.round(lerp(p.width, L(p, 24), ease(u))), 6) },
-      { for: 2.5, say: 'AAAAH !', penguin: (s) => ({ pose: 'scared', dx: 0, dy: s < 0.4 ? -2 : 0 }), draw: (p) => { ghost(p, 'stand', L(p, 25), FLOE - gull.stand.length); exclaim(p); } },
-      { for: 4, say: '…ce n’était que Gaspard !', penguin: pose('surprised'), draw: (p) => { ice(p, p.floe - 1, L(p, 36)); standing(p, L(p, 25)); } },
+      { for: 2.5, who: 'Le pingouin', say: 'AAAAH !', penguin: (s) => ({ pose: 'scared', dx: 0, dy: s < 0.4 ? -2 : 0 }), draw: (p) => { ghost(p, 'stand', L(p, 25), FLOE - gull.stand.length); exclaim(p); } },
+      { for: 4, say: '…ce n’était que Gaspard la mouette !', penguin: pose('surprised'), draw: (p) => { ice(p, p.floe - 1, L(p, 36)); standing(p, L(p, 25)); } },
       { for: 5, say: 'Ils rient aux éclats tous les deux.', penguin: alternate('happy', 'pleased', 3), draw: (p, s) => { ice(p, p.floe - 1, L(p, 36)); standing(p, L(p, 25), beat(s, 3) === 1); hearts(p, L(p, 20), 7, s, 1); } },
     ],
   },
@@ -566,12 +600,12 @@ export const stories: Story[] = [
     beats: [
       { for: 4.5, say: 'Il jongle avec trois boules de neige.', penguin: (s) => ({ pose: Math.floor(s * 2.5) % 2 ? 'juggling2' : 'juggling', dx: 0, dy: 0 }), draw: (p, s) => juggled(p, s, 3) },
       {
-        for: 3.5, say: 'Hop ! Gaspard en attrape une !', penguin: (s) => ({ pose: Math.floor(s * 2.5) % 2 ? 'juggling2' : 'juggling', dx: 0, dy: 0 }),
+        for: 3.5, say: 'Hop ! Gaspard la mouette en vole une !', penguin: (s) => ({ pose: Math.floor(s * 2.5) % 2 ? 'juggling2' : 'juggling', dx: 0, dy: 0 }),
         draw: (p, s, u) => { juggled(p, s, 2); const x = lerp(p.width, L(p, 34), ease(u)); flying(p, x, 4, s); put(p.canvas, penguinProps.ball, Math.round(x) + 6, 10, penguinPalette); },
       },
-      { for: 3, say: '« Rends-la-moi ! »', penguin: startle('surprised'), draw: (p, s) => { flying(p, L(p, 36), 4 + beat(s, 2), s); put(p.canvas, penguinProps.ball, L(p, 42), 10 + beat(s, 2), penguinPalette); exclaim(p); } },
+      { for: 3, who: 'Le pingouin', say: 'Rends-la-moi !', penguin: startle('surprised'), draw: (p, s) => { flying(p, L(p, 36), 4 + beat(s, 2), s); put(p.canvas, penguinProps.ball, L(p, 42), 10 + beat(s, 2), penguinPalette); exclaim(p); } },
       {
-        for: 4, say: 'Gaspard la lance à Bulle…', penguin: pose('right'),
+        for: 4, say: 'Gaspard la lance à Bulle le poisson…', penguin: pose('right'),
         draw: (p, s, u) => { flying(p, L(p, 36), 4, s); const x = lerp(L(p, 42), L(p, 52), u), y = 10 - Math.sin(Math.PI * u) * 5 + u * 4; put(p.canvas, penguinProps.ball, Math.round(x), Math.round(y), penguinPalette); swimming(p, L(p, 51)); },
       },
       {
@@ -586,17 +620,166 @@ export const stories: Story[] = [
     ],
   },
   {
+    // Heavy steps, a huge bear… who is only hungry.
+    id: 'ours', title: 'L’ours', room: 62,
+    beats: [
+      { for: 4.5, say: 'Boum… boum… des pas lourds approchent.', penguin: pose('right'), draw: (p, s) => { sweat(p, s); if (beat(s, 1.2)) exclaim(p); } },
+      {
+        for: 4.5, say: 'Un ours polaire ! Au secours !', penguin: (s) => ({ pose: 'scared', dx: 0, dy: s < 0.3 ? -2 : 0 }),
+        draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 50)); walkingBear(p, lerp(p.width, L(p, 33), ease(u)), s); },
+      },
+      { for: 4.5, say: 'Mais Nounours l’ours se met à pleurer…', penguin: pose('surprised'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 50)); sittingBear(p, L(p, 34), 'sad', s); } },
+      { for: 4, say: 'Il a faim, le pauvre. Le ventre vide !', penguin: pose('thinking'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 50)); sittingBear(p, L(p, 34), 'sad', s); } },
+      {
+        for: 4.5, say: 'Le pingouin lui offre son poisson.', penguin: (s, u) => ({ pose: u < 0.4 ? 'eating' : 'pleased', dx: 0, dy: 0 }),
+        draw: (p, s, u) => {
+          ice(p, p.floe - 1, L(p, 50)); sittingBear(p, L(p, 34), u < 0.8 ? 'sad' : 'happy', s);
+          const v = part(u, 0.4, 0.85);
+          if (v > 0 && v < 1) put(p.canvas, smallFish, Math.round(lerp(L(p, 16), L(p, 37), v)), Math.round(10 - Math.sin(Math.PI * v) * 6));
+        },
+      },
+      { for: 4.5, who: 'Nounours', say: 'Merci ! Tu veux bien être mon ami ?', penguin: startle('surprised'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 50)); sittingBear(p, L(p, 34), 'happy', s); } },
+      { for: 5, say: 'Le plus gros des amis… et le plus doux.', penguin: bounce('love', 1), draw: (p, s) => { ice(p, p.floe - 1, L(p, 50)); sittingBear(p, L(p, 34), 'happy', s); hearts(p, L(p, 30), 7, s); } },
+    ],
+  },
+  {
+    // A giant spout, a whale, and a ride under the stars.
+    id: 'baleine', title: 'La baleine', room: 66,
+    beats: [
+      { for: 4.5, say: 'La mer est bien calme ce soir…', penguin: pose('right') },
+      { for: 3.5, say: 'Pschhh ! Un jet d’eau géant !', penguin: startle('surprised'), draw: (p, s) => spout(p, L(p, 47), 11, s) },
+      {
+        for: 4.5, say: 'C’est Bernadette, la baleine !', penguin: pose('right'),
+        draw: (p, s, u) => { const y = Math.round(lerp(20, 15, ease(part(u, 0, 0.6)))); bernadette(p, L(p, 40), y, s); if (u > 0.6) spout(p, L(p, 47), y - 4, s); },
+      },
+      { for: 4, who: 'Bernadette', say: 'Monte, petit ! On fait un tour ?', penguin: bounce('waving', 2), draw: (p, s) => bernadette(p, L(p, 40), 15, s) },
+      {
+        for: 5, say: 'Il grimpe sur le dos de Bernadette !', caption: 14, penguin: (s) => aboard(walk(0, 14, 4, 'right')(s)),
+        draw: (p, s, u) => bernadette(p, Math.round(lerp(L(p, 40), L(p, 24), ease(part(u, 0, 0.4)))), 15, s),
+      },
+      { for: 5.5, say: 'Une balade sous les étoiles !', caption: 14, penguin: (s) => aboard({ pose: 'happy', dx: 14 + Math.round(Math.sin(s * 1.2) * 2), dy: beat(s, 1) ? -1 : 0 }), draw: (p, s) => { bernadette(p, L(p, 24) + Math.round(Math.sin(s * 1.2) * 2), 15, s); starry(p, s); } },
+      {
+        for: 3.5, say: 'Pschhh ! Une douche en prime !', caption: 14, penguin: (s) => aboard({ pose: 'surprised', dx: 14, dy: s < 0.3 ? -1 : 0 }),
+        draw: (p, s, u) => { bernadette(p, L(p, 24), 15, s); spout(p, L(p, 31), 10, s); for (let i = 0; i < 6; i++) dot(p.canvas, L(p, 18 + i * 2), Math.round(2 + ((u * 6 + i) % 4)), i % 2 ? '58b4ff' : '9fe3ff'); },
+      },
+      {
+        for: 4.5, say: 'Il rentre, trempé mais ravi.', caption: 14, penguin: (s) => aboard(walk(14, 0, 3.5, 'left')(s)),
+        draw: (p, s, u) => bernadette(p, Math.round(lerp(L(p, 24), L(p, 44), part(u, 0.5, 1))), Math.round(lerp(15, 20, part(u, 0.6, 1))), s),
+      },
+    ],
+  },
+  {
+    // A seal's trick, a snowball on the head, and a game for two.
+    id: 'phoque', title: 'Le phoque', room: 58,
+    beats: [
+      { for: 4.5, say: 'Pistache le phoque fait son numéro.', penguin: pose('right'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 1); } },
+      { for: 4, say: 'Une boule de neige… en équilibre !', penguin: startle('surprised'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0.2); } },
+      { for: 4, say: 'Le pingouin veut essayer aussi.', penguin: pose('juggling'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0); put(p.canvas, penguinProps.ball, L(p, 9) + beat(s, 3), 0 + beat(s, 2), penguinPalette); } },
+      {
+        for: 3, say: 'Boing ! Elle lui tombe sur la tête.', penguin: (s) => ({ pose: s < 0.5 ? 'surprised' : 'closed', dx: 0, dy: s < 0.6 && s > 0.4 ? 1 : 0 }),
+        draw: (p, s, u) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0); if (u < 0.2) put(p.canvas, penguinProps.ball, L(p, 9), Math.round(u * 5), penguinPalette); else sparkles(p, L(p, 10), 2, s, 6); },
+      },
+      { for: 4.5, who: 'Pistache', say: 'Doucement… regarde-moi faire !', penguin: pose('thinking'), draw: (p, s) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0.6); } },
+      {
+        for: 5, say: 'Et les voilà qui jonglent à deux !', penguin: (s) => ({ pose: Math.floor(s * 2) % 2 ? 'juggling2' : 'juggling', dx: 0, dy: 0 }),
+        draw: (p, s) => {
+          ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0, false);
+          const v = (s % 2) / 2, w = v < 0.5 ? v * 2 : 2 - v * 2;
+          put(p.canvas, penguinProps.ball, Math.round(lerp(L(p, 11), L(p, 28), w)), Math.round(7 - Math.sin(Math.PI * ((v * 2) % 1)) * 5), penguinPalette);
+        },
+      },
+      { for: 4.5, say: 'Bravo ! Gaspard applaudit des ailes.', penguin: alternate('happy', 'pleased', 2), draw: (p, s) => { ice(p, p.floe - 1, L(p, 48)); pistache(p, s, 0.2); flying(p, L(p, 40), 4 + beat(s, 3), s * 1.5); hearts(p, L(p, 22), 8, s); } },
+    ],
+  },
+  {
+    // The sky lights up, and everyone comes to watch.
+    id: 'aurore', title: 'L’aurore', room: 50,
+    beats: [
+      { for: 4.5, say: 'Une lueur étrange sur les montagnes…', penguin: pose('right'), draw: (p, s, u) => northernLights(p, s, 0.15 + u * 0.25) },
+      { for: 3.5, say: 'Et soudain, le ciel s’allume !', penguin: startle('surprised'), draw: (p, s, u) => northernLights(p, s, 0.4 + u * 0.6) },
+      { for: 5, say: 'Une aurore boréale ! Le ciel danse !', penguin: alternate('happy', 'right', 1), draw: (p, s) => northernLights(p, s, 1) },
+      {
+        for: 5, say: 'Gaspard et Bulle viennent admirer.', penguin: pose('right'),
+        draw: (p, s, u) => { northernLights(p, s, 1); ice(p, p.floe - 1, L(p, 42)); if (u < 0.6) flight(p, s, part(u, 0, 0.6), p.width, 4, L(p, 31), 9); else standing(p, L(p, 31)); swimming(p, lerp(p.width - 4, L(p, 46), clamp(u * 1.5))); },
+      },
+      { for: 5, say: 'Ils restent là, sans un mot…', penguin: pose('pleased'), draw: (p, s) => { northernLights(p, s, 1); ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31)); swimming(p, L(p, 46)); } },
+      { for: 5, say: 'Le plus beau spectacle du monde.', penguin: bounce('love', 0.8), draw: (p, s, u) => { northernLights(p, s, 1 - u * 0.5); ice(p, p.floe - 1, L(p, 42)); standing(p, L(p, 31), true); swimming(p, L(p, 46)); hearts(p, L(p, 18), 8, s, 1); } },
+    ],
+  },
+  {
     // A midnight swim, and a fish who keeps it company.
     id: 'baignade', title: 'La baignade', room: 70,
     beats: [
       { for: SWIM.jump, say: 'Petite baignade de minuit !', penguin: (s) => swimFrame(s), draw: swimDrawing(0) },
       { for: SWIM.plunge - SWIM.jump + 1, say: 'Plouf !', penguin: (s) => swimFrame(SWIM.jump + s), draw: swimDrawing(SWIM.jump) },
       { for: 4.5, say: 'Il se laisse flotter, tranquille.', penguin: (s) => swimFrame(SWIM.plunge + 1 + s), draw: (p, s, u) => { swimDrawing(SWIM.plunge + 1)(p, s, u); swimming(p, lerp(p.width - 4, L(p, 58), u)); } },
-      { for: SWIM.float - SWIM.plunge - 5.5, say: 'Bulle vient lui tenir compagnie.', penguin: (s) => swimFrame(SWIM.plunge + 5.5 + s), draw: (p, s, u) => { swimDrawing(SWIM.plunge + 5.5)(p, s, u); leap(p, part(u, 0.1, 0.6), L(p, 68), L(p, 58), 9, true); hearts(p, L(p, 56), 8, s, 1); } },
+      { for: SWIM.float - SWIM.plunge - 5.5, say: 'Bulle le poisson lui tient compagnie.', penguin: (s) => swimFrame(SWIM.plunge + 5.5 + s), draw: (p, s, u) => { swimDrawing(SWIM.plunge + 5.5)(p, s, u); leap(p, part(u, 0.1, 0.6), L(p, 68), L(p, 58), 9, true); hearts(p, L(p, 56), 8, s, 1); } },
       { for: SWIM.home - SWIM.float, say: 'Allez, on rentre se sécher !', penguin: (s) => swimFrame(SWIM.float + s), draw: swimDrawing(SWIM.float) },
     ],
   },
 ];
+
+/** Nounours walking along the ice, paw after paw. */
+function walkingBear(place: StoryPlace, x: number, s: number): void {
+  put(place.canvas, Math.floor(s * 3) % 2 ? bear.step : bear.walk, Math.round(x), FLOE - bear.walk.length);
+}
+
+/** Nounours sitting, facing us: tears when he is sad, a smile and pink cheeks when he is happy. */
+function sittingBear(place: StoryPlace, x: number, mood: 'sad' | 'happy', s: number): void {
+  const y = FLOE - bear.sit.length;
+  put(place.canvas, bear.sit, x, y);
+  if (mood === 'sad') {
+    const drop = Math.floor((s * 2) % 3);
+    dot(place.canvas, x + 3, y + 4 + drop, '58b4ff');
+    dot(place.canvas, x + 8, y + 4 + ((drop + 1) % 3), '58b4ff');
+  } else {
+    for (const [dx, dy] of [[4, 6], [5, 7], [6, 7], [7, 6]] as const) dot(place.canvas, x + dx, y + dy, '0a0d16');
+    dot(place.canvas, x + 2, y + 5, 'ffa6c4'); dot(place.canvas, x + 9, y + 5, 'ffa6c4');
+  }
+}
+
+/** A whale's spout, its drops dancing. */
+function spout(place: StoryPlace, x: number, y: number, s: number): void {
+  put(place.canvas, whale.spout[Math.floor(s * 4) % 2]!, x, y);
+}
+
+/** Bernadette, her back at row `y` (lower is further under), her tail waving behind her. */
+function bernadette(place: StoryPlace, x: number, y: number, s: number): void {
+  put(place.canvas, whale.back, x, y);
+  put(place.canvas, whale.tail, x + whale.back[0]!.length, y - 2 + beat(s, 1.5));
+}
+
+/** Out over the sea, the penguin stands on Bernadette's back, a little higher than the ice. */
+function aboard(frame: Frame): Frame {
+  return frame.dx >= 8 ? { ...frame, dy: frame.dy - 2 } : frame;
+}
+
+/** Pistache on the ice, a snowball on his nose wobbling by `wobble` (0: still, 1: bouncing). */
+function pistache(place: StoryPlace, s: number, wobble: number, ball = true): void {
+  const x = L(place, 30), y = FLOE - seal.length;
+  put(place.canvas, seal, x, y);
+  if (!ball) return;
+  const bounce = Math.round(Math.abs(Math.sin(s * 3)) * 3 * Math.max(0, wobble - 0.5) * 2);
+  put(place.canvas, penguinProps.ball, x - 1 + Math.round(Math.sin(s * 4) * wobble), y - 2 - bounce, penguinPalette);
+}
+
+const mixHex = (a: string, b: string, t: number) => [0, 2, 4]
+  .map((i) => Math.round(parseInt(a.slice(i, i + 2), 16) * (1 - t) + parseInt(b.slice(i, i + 2), 16) * t).toString(16).padStart(2, '0')).join('');
+
+/** The northern lights: curtains of green and violet waving over the mountains, `strength` 0 → 1. */
+function northernLights(place: StoryPlace, s: number, strength: number): void {
+  for (let x = L(place, 22); x < place.width; x++) {
+    const top = 2.5 + Math.sin(x * 0.11 + s * 0.7) * 1.6 + Math.sin(x * 0.037 - s * 0.4) * 1.4;
+    const height = 6 + Math.sin(x * 0.2 + s) * 1.5;
+    for (let y = Math.max(1, Math.floor(top)); y <= Math.min(12, top + height); y++) {
+      // Only the sky itself glows: the stars and the moon stay in front.
+      if (place.canvas[y]?.[x] !== backdrop(y)) continue;
+      const k = (y - top) / height, glow = 1.35 * strength * (0.7 + 0.3 * Math.sin(x * 0.27 + s * 1.6)) * Math.max(0, 1 - Math.abs(k - 0.5) * 1.1);
+      const color = k < 0.35 ? aurora[4]! : k < 0.6 ? aurora[3]! : aurora[2]!;
+      place.canvas[y]![x] = mixHex(backdrop(y), color, clamp(glow));
+    }
+  }
+}
 
 /** Bulle hooked, hanging from the line by his mouth, wriggling. */
 function hooked(place: StoryPlace, s: number): void {
@@ -673,12 +856,16 @@ function swimDrawing(from: number): Draw {
 
 /** Seconds the story lasts. */
 export function storyLength(story: Story): number {
-  return story.beats.reduce((sum, beat) => sum + beat.for, 0);
+  return TITLE_FOR + story.beats.reduce((sum, beat) => sum + beat.for, 0);
 }
+/** Seconds the episode's title shows alone, like a card, before its first shot. */
+export const TITLE_FOR = 2.5;
 
 /** The shot playing `seconds` into the story, how far into it, and where it starts. */
-export function storyBeat(story: Story, seconds: number): { beat: Beat; index: number; s: number; u: number; start: number } | undefined {
-  let start = 0;
+export function storyBeat(story: Story, seconds: number): { beat: Beat; index: number; s: number; u: number; start: number; title?: true } | undefined {
+  // The title card: the first shot's scene, still, under the episode's name.
+  if (seconds < TITLE_FOR) return { beat: story.beats[0]!, index: 0, s: 0, u: 0, start: 0, title: true };
+  let start = TITLE_FOR;
   for (const [index, beat] of story.beats.entries()) {
     if (seconds < start + beat.for) {
       const s = Math.max(0, seconds - start);

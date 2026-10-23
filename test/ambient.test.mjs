@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import xterm from '@xterm/headless';
 import { AmbientMood, ambientBand, ambientEnabled, bandHit, bandRows, BAND_ROWS, blinking, looksBusy, penguinFrame, penguinPose, readSignals } from '../dist/ambient.js';
-import { stories, storyBeat, storyLength } from '../dist/stories.js';
+import { TITLE_FOR, stories, storyBeat, storyLength } from '../dist/stories.js';
 import { penguinPoses, PENGUIN_HEIGHT } from '../dist/penguin.js';
 import { reactionDefinitions } from '../dist/reactions.js';
 import { InputReader, leftClick } from '../dist/mouse.js';
@@ -170,6 +170,8 @@ test('left alone, it tells its episodes, never the same twice in a row; too narr
     if (view.story && view.story.id !== told.at(-1)) told.push(view.story.id);
     if (view.doing && view.doing.name !== done.at(-1)) done.push(view.doing.name);
   }
+  assert.equal(told[0], 'amis', 'first, the friends are introduced');
+  assert.ok(!told.slice(1).some((id) => id.startsWith('amis')), 'once a session');
   assert.ok(new Set(told).size >= 12, told.join(' '));
   told.slice(1).forEach((id, i) => assert.notEqual(id, told[i], 'never the same episode twice in a row'));
   assert.ok(done.every((name) => ['look', 'wave', 'stroll'].includes(name)), `between episodes, only small things: ${done.join(' ')}`);
@@ -241,7 +243,7 @@ test('the AI comes first: an episode waits for it, then resumes at the shot it l
   assert.ok(view.story, 'calm, it starts an episode');
   const story = stories.find(({ id }) => id === view.story.id);
   // Into its third shot…
-  const third = story.beats[0].for + story.beats[1].for;
+  const third = TITLE_FOR + story.beats[0].for + story.beats[1].for;
   for (const end = now + (third + 0.5) * 1000; now < end; now += 250) view = mood.update(now, calm);
   assert.equal(storyBeat(story, view.story.seconds).index, 2);
   // …the AI starts working: the episode stops at once.
@@ -274,16 +276,22 @@ test('every episode plays whole at every width it fits: the narrator never cut, 
         const lines = ambientBand(view, columns);
         assert.equal(lines.length, BAND_ROWS, `${story.id} ${columns}`);
         for (const line of lines) assert.equal([...plain(line)].length, columns, `${story.id} at ${t}s, ${columns} columns`);
-        const shot = storyBeat(story, t);
-        // Once typed, the narrator's whole line shows, title first.
-        if (shot.s > ([...shot.beat.say].length + 3) / 40 + 0.05 && columns >= 80) {
-          const caption = plain(lines[1]);
-          if (caption.includes(story.title.toUpperCase())) { assert.ok(caption.includes(shot.beat.say), `${story.id}: « ${shot.beat.say} » at ${columns} columns`); shown++; }
+        const shot = storyBeat(story, t), caption = plain(lines[1]);
+        if (shot.title) {
+          // The title shows alone, like a card: it is not someone speaking.
+          assert.ok(caption.includes(`ÉPISODE : ${story.title.toUpperCase()}`), `${story.id}: its title card`);
+        } else if (columns >= 80) {
+          // Once typed, the whole line shows: the narrator's alone, a character's after their name.
+          const line = shot.beat.who ? `${shot.beat.who} : « ${shot.beat.say} »` : shot.beat.say;
+          if (shot.s > [...line].length / 40 + 0.05) { assert.ok(caption.includes(line), `${story.id}: « ${line} » at ${columns} columns`); shown++; }
+          assert.ok(!caption.includes(story.title.toUpperCase()), `${story.id}: no title before the lines, it reads like a speaker`);
         }
         lines.forEach((line, i) => { if (i !== 1) assert.match(plain(line), /^▀*$/, `${story.id}: pixel art only, line ${i}`); });
       }
     }
     assert.ok(shown > 0, `${story.id}: its narrator speaks`);
+    // A line in quotes is someone speaking: it must say who.
+    for (const beat of story.beats) assert.ok(beat.who || !/^«/.test(beat.say), `${story.id}: « ${beat.say} » needs its speaker`);
   }
 });
 

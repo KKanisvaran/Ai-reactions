@@ -7,7 +7,7 @@ export const castPalette = {
     W: 'ffffff', w: 'd6e2ee', g: '9aa8ba', G: '5c6a80', K: '0a0d16',
     Y: 'ffd23f', y: 'e09a1a', O: 'ff8a2a', o: 'c85a14', R: 'ee4250', r: 'a02536', P: 'ffa6c4',
     B: '58b4ff', b: '2a78d0', C: 'bff0ff', T: 'b07040', t: '6a3e1e', V: '74d27a', v: '3a9446',
-    S: 'fff3b0',
+    S: 'fff3b0', N: '6a94c4', n: '4a74a8',
 };
 /** Gaspard the seagull, facing left: wings up, wings down, and standing on the ice. */
 export const gull = {
@@ -89,6 +89,70 @@ export const star = {
 };
 /** The trail behind the star, brightest first. */
 export const trailColors = ['fff3b0', 'ffd23f', 'e0a8ff', '8a7ad8', '4a5aa8'];
+/** Nounours the polar bear: walking on the ice, facing left; sitting, facing us. */
+export const bear = {
+    walk: [
+        '.....gww........',
+        '....wWWWw.......',
+        '...wWKWWWwwwwww.',
+        'KwWWWWWWWWWWWWWw',
+        '.wWWWWWWWWWWWWWW',
+        '..wWWWWWWWWWWWWW',
+        '...WWgggggggWWWg',
+        '...WWg..WWg.WWg.',
+        '...WW...WW..WW..',
+        '..gWW..gWW.gWW..',
+    ],
+    step: [
+        '.....gww........',
+        '....wWWWw.......',
+        '...wWKWWWwwwwww.',
+        'KwWWWWWWWWWWWWWw',
+        '.wWWWWWWWWWWWWWW',
+        '..wWWWWWWWWWWWWW',
+        '...WWgggggggWWWg',
+        '....WWg.WWg..WWg',
+        '....WW..WW...WW.',
+        '...gWW.gWW..gWW.',
+    ],
+    sit: [
+        '.gw......wg.',
+        '.wWw....wWw.',
+        '..WWWWWWWW..',
+        '.WWKWWWWKWW.',
+        '.WWWWKKWWWW.',
+        '..WWWKKWWW..',
+        '.wWWWWWWWWw.',
+        'wWWWWWWWWWWw',
+        'wWWwWWWWwWWw',
+        'wWWWWWWWWWWw',
+        '.wWWw..wWWw.',
+    ],
+};
+/** Pistache the seal, lying on the ice, his nose up, facing left. */
+export const seal = [
+    '..GG............',
+    '.GKGG...........',
+    'KGGGGG..........',
+    '.wGGGGGGG.......',
+    '..wwGGGGGGGGGG..',
+    '...wwwwGGGGGGgG.',
+    '....gg....gGGGgg',
+];
+/** Bernadette the whale's back above the sea, her eye on the left; her tail; her spout. */
+export const whale = {
+    back: [
+        '........NNNNNNNN..........',
+        '.....NNNnnnnnnnnNNN.......',
+        '...NNnnnnnnnnnnnnnnNN.....',
+        '.NNnKnnnnnnnnnnnnnnnnNN...',
+        'NnnnnnnnnnnnnnnnnnnnnnnnN.',
+    ],
+    tail: ['N...N', 'NN.NN', '.NNN.', '..N..'],
+    spout: [['.C.C.', 'C.W.C', '.CWC.', '..W..', '..W..'], ['C...C', '.CWC.', 'C.W.C', '..W..', '..W..']],
+};
+/** The colors of the northern lights, faint to bright. */
+export const aurora = ['16525a', '1f8a6a', '35c99a', '7a5cc8', 'b47ae0'];
 /** Gaspard's head alone, peeking out of somewhere. */
 export const gullHead = ['.wWW', 'wKWW', 'YYWW'];
 /** A sleeper's « z ». */

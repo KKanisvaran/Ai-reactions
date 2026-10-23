@@ -88,6 +88,8 @@ export class AmbientMood {
     /** The episodes, in the order this session tells them. */
     playlist;
     told = 0;
+    /** The friends were introduced this session. */
+    introduced = false;
     story;
     nextStory;
     activity;
@@ -153,9 +155,18 @@ export class AmbientMood {
         }
         if (!calm || this.activity || now < this.nextStory)
             return;
+        // First, the friends are introduced: then every episode knows who is who.
+        if (!this.introduced) {
+            const index = stories.findIndex((story) => story.opening && this.fits(story));
+            this.introduced = true;
+            if (index >= 0) {
+                this.story = { index, start: now };
+                return;
+            }
+        }
         for (let tries = 0; tries < this.playlist.length; tries++) {
             const index = this.playlist[this.told++ % this.playlist.length];
-            if (this.fits(stories[index])) {
+            if (!stories[index].opening && this.fits(stories[index])) {
                 this.story = { index, start: now };
                 return;
             }
@@ -575,11 +586,18 @@ export function bandCells(view, columns) {
         drawScene(view.reaction.name, view.reaction.seconds, stage);
     }
     else if (shot) {
-        // The narrator types the shot's line beside the episode's title.
-        const title = shot.story.title.toUpperCase(), line = [...` · ${shot.beat.say}`];
-        const typed = line.slice(0, Math.max(3, Math.floor(shot.s * NARRATOR_SPEED))), space = room - [...title].length;
-        write(x, title, tint.title);
-        write(x + [...title].length, typed.length > space ? `${typed.slice(0, space - 1).join('')}…` : typed.join(''), tint.text);
+        // First the episode's title, alone, like a card; then the narrator, in plain
+        // text; a character's name, in color, only before what that character says.
+        const parts = shot.title ? [{ text: `ÉPISODE : ${shot.story.title.toUpperCase()}`, style: tint.title }]
+            : shot.beat.who ? [{ text: shot.beat.who, style: tint.title }, { text: ` : « ${shot.beat.say} »`, style: tint.text }]
+                : [{ text: shot.beat.say, style: tint.text }];
+        let budget = shot.title ? Infinity : Math.floor(shot.s * NARRATOR_SPEED), at = x;
+        for (const { text, style } of parts) {
+            const chars = [...text].slice(0, Math.max(0, Math.min(budget, x + room - at)));
+            write(at, chars.join(''), style);
+            at += chars.length;
+            budget -= chars.length;
+        }
     }
     else if (view.drawn >= 1 && view.scene === 'quiet' && view.seconds >= FISHING_FOR) {
         drawSleep(view.clock, stage);
