@@ -75,7 +75,8 @@ function stillDecor(width: number, scene: DecorScene): { canvas: string[][]; lay
   const set = (x: number, y: number, color: string) => { if (x >= 0 && x < width && y >= 0 && y < height) { canvas[y]![x] = color; layer[y]![x] = level; } };
   const sprite = (rows: string[], left: number, top: number) => rows.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') set(left + x, top + y, colors[c]!); }));
 
-  sprite(MOON, width - 14, 1);
+  // Below the narrator's line, so a long caption never hides it.
+  sprite(MOON, width - 14, 4);
   // Mountains along the horizon: lit on the left, shaded on the right.
   for (let i = 0, center = -6; center < width + 12; i++, center += 12 + Math.floor(noise(i + 300) * 14)) {
     const peak = 3 + Math.floor(noise(i + 500) * 4);
