@@ -8,6 +8,9 @@ import type { Pose } from './penguin.ts';
 
 export type Activity =
   | 'look' | 'wave' | 'sing' | 'dance' | 'juggle' | 'think' | 'snack' | 'shiver' | 'stroll' | 'swim'
+  // From the third sheet: hobbies, each with what it holds.
+  | 'read' | 'feast' | 'tinker' | 'build' | 'paint' | 'ninja' | 'experiment' | 'game' | 'gift' | 'photo' | 'spy'
+  | 'guitar' | 'love' | 'idea' | 'king' | 'garden' | 'balloon'
   | 'pleased' | 'hop' | 'greet' | 'wish' | 'splash';
 
 /** What the user can click in the band. */
@@ -29,6 +32,8 @@ export const WATERLINE = HORIZON + 3;
 export const activityLength: Record<Activity, number> = {
   look: 2.4, wave: 3, sing: 5, dance: 5, juggle: 6, think: 4.5, snack: 4, shiver: 3, stroll: 5.4, swim: SWIM.home,
   pleased: 2.6, hop: 1.6, greet: 3, wish: 2.6, splash: 2.6,
+  read: 5, feast: 4, tinker: 4, build: 4.5, paint: 5, ninja: 3.5, experiment: 4.5, game: 5, gift: 3.5, photo: 3.5, spy: 4.5,
+  guitar: 5, love: 4, idea: 4, king: 4, garden: 4.5, balloon: 5,
 };
 
 /**
@@ -38,7 +43,8 @@ export const activityLength: Record<Activity, number> = {
 export const homeward: Partial<Record<Activity, number>> = { stroll: 3.8, swim: SWIM.float };
 
 /** What it may pick by itself when nothing happens; looking around is the most common. */
-export const idleActivities: Activity[] = ['look', 'look', 'wave', 'sing', 'dance', 'juggle', 'think', 'snack', 'shiver', 'stroll', 'swim'];
+export const idleActivities: Activity[] = ['look', 'look', 'wave', 'sing', 'dance', 'juggle', 'think', 'snack', 'shiver', 'stroll', 'swim',
+  'read', 'feast', 'tinker', 'build', 'paint', 'ninja', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
 
 /** Its answers to clicks in a row, happier each time. */
 const petting: Activity[] = ['pleased', 'wave', 'hop', 'dance'];
@@ -159,8 +165,30 @@ export function activityFrame({ name, seconds: s }: Doing): Frame {
     case 'greet': return still(s < 0.8 ? 'left' : beat(s, 4) ? 'neutral' : 'waving');
     case 'wish': return still(s < 0.7 ? 'surprised' : 'pleased');
     case 'splash': return s < 1.4 ? still('right') : { pose: 'happy', dx: 0, dy: s < 1.7 ? -1 : 0 };
+    case 'read': return still('reading');
+    // A happy little bounce between two bites.
+    case 'feast': return { pose: 'feasting', dx: 0, dy: beat(s, 1.5) ? -1 : 0 };
+    case 'tinker': return still('tinkering');
+    case 'build': return still('building');
+    case 'paint': return still('painting');
+    // It lands in its ninja stance.
+    case 'ninja': return { pose: 'ninja', dx: 0, dy: s < 0.6 ? jump(s, 0.6, 2) : 0 };
+    case 'experiment': return still('experimenting');
+    case 'game': return still('gaming');
+    case 'gift': return still('gift');
+    case 'photo': return still('photographing');
+    case 'spy': return still('binoculars');
+    case 'guitar': return still('guitar');
+    case 'love': return still('love');
+    // It thinks, then the bulb lights up.
+    case 'idea': return still(s < IDEA_AT ? 'thinking' : 'idea');
+    case 'king': return still('king');
+    case 'garden': return still('gardening');
+    case 'balloon': return still('balloon');
   }
 }
+/** Seconds of thinking before the bulb lights up. */
+const IDEA_AT = 1.2;
 
 const HEART = ['SS.SS', 'SSSSS', '.SSS.', '..S..'];
 // The decor's fish, in the penguin's colors.
@@ -196,6 +224,16 @@ function dot(canvas: string[][], x: number, y: number, color: string): void {
 
 function sprite(canvas: string[][], rows: string[], x: number, y: number): void {
   rows.forEach((row, dy) => [...row].forEach((c, dx) => { if (c !== '.') dot(canvas, x + dx, y + dy, penguinPalette[c]!); }));
+}
+
+/** What the activity holds behind the penguin: a balloon, a bulb beside its head. */
+export function drawBehind(doing: Doing, frame: Frame, { canvas, left }: Place): void {
+  const s = doing.seconds, x = left + frame.dx, y = frame.dy;
+  switch (doing.name) {
+    // Its knot on the string the flipper holds, swaying with the air.
+    case 'balloon': sprite(canvas, penguinProps.balloon, x + 18, y + (Math.sin(s * 2.2) > 0.3 ? 1 : 0)); break;
+    case 'idea': if (s >= IDEA_AT) sprite(canvas, penguinProps.bulb, x + 18, y + (s < IDEA_AT + 0.2 ? 1 : 0)); break;
+  }
 }
 
 /** What the activity adds around the penguin: notes, balls, a bubble, hearts… */
@@ -244,6 +282,20 @@ export function drawActivity(doing: Doing, frame: Frame, { canvas, left, snowman
         const up = rise(i, 0.6, 8);
         sprite(canvas, i ? penguinProps.note2 : penguinProps.note, x + 17 + i * 3 + Math.round(Math.sin(s * 3 + i * 2)), Math.round(7 - up) + y);
       }
+      break;
+    case 'guitar': {
+      // The sheet's three notes rise from the strings, swaying.
+      const notes = [penguinProps.guitarNote, penguinProps.guitarNote2, penguinProps.guitarNote3];
+      notes.forEach((note, i) => {
+        const u = (s * 0.5 + i / 3) % 1;
+        sprite(canvas, note, x + 15 + i * 3 + Math.round(Math.sin(s * 2.5 + i * 2)), Math.round(9 - u * 9) + y);
+      });
+      break;
+    }
+    case 'love': sprite(canvas, penguinProps.loveHeart, x + 16 + Math.round(Math.sin(s * 3)), Math.round(4 - rise(0, 0.5, 4)) + y); break;
+    case 'garden':
+      // Drops fall from the spout onto the ice.
+      for (let i = 0; i < 3; i++) dot(canvas, x + 30 + (i % 2), Math.floor(13 + rise(i, 1.5, 5)) + y, '6cbcfd');
       break;
     case 'dance':
       sprite(canvas, penguinProps.note, x + 21 + beat(s, 3), 2 + beat(s, 1.5));

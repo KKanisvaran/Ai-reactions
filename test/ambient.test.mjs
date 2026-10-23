@@ -157,6 +157,19 @@ test('every pose stands on the same feet, centered on the same belly', () => {
   }
 });
 
+test('the third sheet\'s hobbies keep the penguin at its size, each with its own pose', () => {
+  const base = { scene: 'idle', seconds: 20, clock: 20, work: 0, drawn: 1, visit: 0 };
+  const hobbies = ['read', 'feast', 'tinker', 'build', 'paint', 'ninja', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
+  const poses = hobbies.map((name) => penguinPose({ ...base, doing: { name, seconds: 3 } }));
+  assert.equal(new Set(poses).size, hobbies.length);
+  const headTop = (rows) => rows.findIndex((row) => /KKKKK/.test(row));
+  for (const pose of ['reading', 'gift', 'love', 'idea', 'balloon', 'photographing']) assert.equal(headTop(penguinPoses[pose]), headTop(penguinPoses.neutral), pose);
+  // The bulb lights up once it has thought.
+  const band = (seconds) => ambientBand({ ...base, doing: { name: 'idea', seconds } }, 80).join('');
+  assert.equal(penguinPose({ ...base, doing: { name: 'idea', seconds: 0.5 } }), 'thinking');
+  assert.notEqual(band(0.5), band(2));
+});
+
 test('left alone, the penguin keeps busy, never twice the same thing in a row', () => {
   const mood = new AmbientMood(0, 11);
   const done = [];

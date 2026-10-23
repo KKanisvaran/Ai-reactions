@@ -2,7 +2,7 @@
 // the AI is doing. MCP reactions play here too, never over the AI.
 // Everything here is pure and driven by the clock the caller passes in; the
 // AI's screen is only read in memory, never logged.
-import { SWIM_ROOM, activityFrame, activityLength, answer, drawActivity, homeward, idleActivities, underWater } from './companion.ts';
+import { SWIM_ROOM, activityFrame, activityLength, answer, drawActivity, drawBehind, homeward, idleActivities, underWater } from './companion.ts';
 import type { Activity, Doing, Frame, Target } from './companion.ts';
 import { DECOR_HEIGHT, HORIZON, SNOWMAN_WIDTH, backdrop, decorPixels } from './decor.ts';
 import type { DecorVisitor } from './decor.ts';
@@ -487,13 +487,14 @@ export function bandCells(view: AmbientView, columns: number): BandCell[][] {
   const visit = view.visitor ? Math.min(1, view.visit / (VISIT_FOR / 1000)) : 0;
   const canvas = decorPixels(width, { clock: view.clock, floe, snowman, visitor: view.visitor, visit });
   const frame = penguinFrame(view), pixels = penguinPixels(view, frame.pose);
+  const doing = activeDoing(view);
+  if (doing) drawBehind(doing, frame, { canvas, left: tx, snowman, sea: HORIZON + 1, floe });
   const px = tx + frame.dx + (PENGUIN_WIDTH - pixels[0]!.length) / 2;
   pixels.forEach((line, y) => [...line].forEach((pixel, x) => {
     if (pixel === '.' || underWater(frame, px + x, y + frame.dy, floe)) return;
     if (canvas[y + frame.dy]?.[px + x] !== undefined) canvas[y + frame.dy]![px + x] = penguinPalette[pixel]!;
   }));
   if (view.drawn >= 1 && frame.pose === 'fishing') fishingLine(canvas, tx, view.clock);
-  const doing = activeDoing(view);
   if (doing) drawActivity(doing, frame, { canvas, left: tx, snowman, sea: HORIZON + 1, floe });
 
   // Beside the penguin, under the caption, down to the level of its feet;
