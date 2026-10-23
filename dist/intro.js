@@ -11,7 +11,24 @@ const font = {
     ' ': ['  ', '  ', '  ', '  ', '  '],
 };
 const TITLE = 'KK LAB';
-const NOTE = ['Créé juste pour le plaisir,', 'en espérant vous faire sourire.'];
+/** The note, one sentence per line; on a narrow terminal, a sentence wraps between its pieces. */
+const NOTE = [
+    ['Ce projet a été créé', 'par pur plaisir,', 'et dédié à celles et ceux', 'qui le téléchargent.'],
+    ['Merci du fond du cœur :', 'vous me donnez la force', 'de continuer.'],
+    ['J’espère sincèrement', 'qu’il vous plaira.'],
+];
+const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
+/** The note's lines on a terminal `cols` wide. */
+function noteLines(cols) {
+    return NOTE.flatMap((pieces) => pieces.reduce((lines, piece) => {
+        const joined = lines.length ? `${lines.at(-1)} ${piece}` : piece;
+        if (lines.length && [...joined].length <= cols - 2)
+            lines[lines.length - 1] = joined;
+        else
+            lines.push(piece);
+        return lines;
+    }, []));
+}
 /** The splash needs room for its note, the mascot when it fits; the keyword list, 21 lines. */
 const SPLASH_MIN = { cols: 30, rows: 13 };
 const KEYWORDS_MIN = { cols: 54, rows: 22 };
@@ -20,11 +37,11 @@ const DRAW = 1.6;
 const IMAGE_AT = DRAW;
 const SIGN_AT = DRAW + 0.2;
 const NOTE_AT = SIGN_AT + 0.5;
-const NOTE_SPEED = 30;
+const NOTE_SPEED = 60;
 /** The splash closes on its own once the note is read; the first launch then lists the keywords. */
-export const SPLASH_FOR = NOTE_AT + [...NOTE.join(' ')].length / NOTE_SPEED + 1.8;
-/** Text lines under the mascot: a gap, the signature, the note (on one or two lines) and a margin. */
-const BELOW = 5;
+export const SPLASH_FOR = NOTE_AT + [...NOTE_TEXT].length / NOTE_SPEED + 1.8;
+/** Text lines under the mascot: a gap, the signature, the note and a margin. */
+const below = (cols) => 3 + noteLines(cols).length;
 /** The real image stays small: at most this many lines tall. */
 const MASCOT_LINES = 12;
 /**
@@ -48,14 +65,14 @@ function mascotBox(cols, rows, graphics) {
     // Pixels per cell: two stacked half blocks, or the real cell size for an image.
     const [cellWidth, cellHeight] = cell ? [cell.width, cell.height] : [1, 2];
     const widthFor = (lines) => Math.ceil(Math.min(lines * cellHeight, cell ? mascotHeight : Infinity) * mascotAspect / cellWidth);
-    let lines = Math.min(cell ? MASCOT_LINES : BLOCK_LINES.max, rows - BELOW);
+    let lines = Math.min(cell ? MASCOT_LINES : BLOCK_LINES.max, rows - below(cols));
     while (lines > 0 && widthFor(lines) > cols - 2)
         lines--;
     if (lines < (cell ? 8 : BLOCK_LINES.min))
         return undefined;
     const width = widthFor(lines);
     return {
-        lines, width, left: Math.floor((cols - width) / 2), top: Math.floor((rows - lines - BELOW + 1) / 2),
+        lines, width, left: Math.floor((cols - width) / 2), top: Math.floor((rows - lines - below(cols) + 1) / 2),
         image: Boolean(cell), pixels: Math.min(lines * cellHeight, mascotHeight),
     };
 }
@@ -72,7 +89,7 @@ function splashFrame(seconds, cols, rows, graphics) {
             lines.push(`${' '.repeat(box.left)}${line}`);
     }
     lines.push('', seconds >= SIGN_AT ? center(`${DIM}by ${AMBER}KK LAB${RESET}`, 9, cols) : '');
-    const note = [...NOTE.join(' ')].length <= cols - 2 ? [NOTE.join(' ')] : NOTE;
+    const note = noteLines(cols);
     let typed = Math.max(0, Math.floor((seconds - NOTE_AT) * NOTE_SPEED));
     for (const line of note) {
         const shown = [...line].slice(0, typed);
@@ -120,7 +137,7 @@ export function introImage(seconds, cols, rows, keywords, graphics) {
 }
 /** Plain text for captured output: no cursor control, no colors. */
 export function introText() {
-    return ['KK LAB · ai-reactions', NOTE.join(' '), 'Tape un mot-clé dans le chat de ton IA :',
+    return ['KK LAB · ai-reactions', NOTE_TEXT, 'Tape un mot-clé dans le chat de ton IA :',
         ...introKeywords.map(({ keyword, summary }) => `  ${keyword.padEnd(11)}${summary}`)].join('\n');
 }
 /**
