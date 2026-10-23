@@ -1,8 +1,0 @@
-{
-  "mcpServers": {
-    "ai-reactions": {
-      "command": "node",
-      "args": ["C:/chemin/ai-reactions/dist/index.js"]
-    }
-  }
-}

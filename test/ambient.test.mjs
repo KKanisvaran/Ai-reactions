@@ -80,15 +80,6 @@ test('a permission prompt is suspense, not the end of the work', () => {
   assert.equal(mood.update(40_000, { busy: false, asking: true }).scene, 'working');
 });
 
-test('MCP reactions play in the band and outrank the tiger\'s own', () => {
-  const mood = new AmbientMood(0, 2);
-  assert.equal(mood.play('rip', 3, 1000), 7000);
-  assert.deepEqual(mood.update(2000, calm).reaction, { name: 'rip', intensity: 3, seconds: 1 });
-  mood.update(2100, busy); mood.update(4000, busy);
-  assert.equal(mood.update(6000, busy).reaction?.name, 'rip');
-  assert.equal(mood.update(8100, calm).reaction, undefined);
-});
-
 test('band draws the penguin, then every reaction beside it, at the requested width', () => {
   const frames = new Set();
   const base = { scene: 'idle', seconds: 1, clock: 5, work: 75, drawn: 1, visit: 0 };
@@ -144,7 +135,7 @@ test('the penguin takes the pose of each state from its sheet', () => {
   const reaction = (name) => penguinPose({ ...base, reaction: { name, intensity: 1, seconds: 1 } });
   assert.deepEqual(['chill', 'facepalm', 'boop', 'reward', 'rip'].map(reaction), ['shades', 'facepalm', 'surprised', 'happy', 'closed']);
   const later = (name) => penguinPose({ ...base, reaction: { name, intensity: 1, seconds: 3 } });
-  assert.deepEqual(['reward', 'boop', 'confused', 'too_slow'].map(later), ['hero', 'innocent', 'thinking', 'sweating'], 'poses from the second sheet');
+  assert.deepEqual(['reward', 'boop', 'too_slow'].map(later), ['hero', 'innocent', 'sweating'], 'poses from the second sheet');
 });
 
 test('every pose stands on the same feet, centered on the same belly', () => {
@@ -159,7 +150,7 @@ test('every pose stands on the same feet, centered on the same belly', () => {
 
 test('the third sheet\'s hobbies keep the penguin at its size, each with its own pose', () => {
   const base = { scene: 'idle', seconds: 20, clock: 20, work: 0, drawn: 1, visit: 0 };
-  const hobbies = ['read', 'feast', 'tinker', 'build', 'paint', 'ninja', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
+  const hobbies = ['read', 'feast', 'tinker', 'build', 'paint', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
   const poses = hobbies.map((name) => penguinPose({ ...base, doing: { name, seconds: 3 } }));
   assert.equal(new Set(poses).size, hobbies.length);
   const headTop = (rows) => rows.findIndex((row) => /KKKKK/.test(row));
@@ -242,7 +233,7 @@ test('a click pets the penguin: it answers kindly, happier at each click', () =>
   assert.deepEqual(mood.update(40_000, calm).doing, { name: 'splash', seconds: 0, user: true, x: 60, y: 17 });
 
   // A click outranks a reaction, and wakes it up from a long pause.
-  mood.play('rip', 1, 50_000);
+  mood.update(50_000, { busy: false, interrupted: true });
   mood.poke('penguin', 50_500);
   assert.equal(penguinPose(mood.update(50_600, calm)), 'pleased');
   const sleepy = new AmbientMood(0, 2);
@@ -262,11 +253,11 @@ test('a click lands on the penguin, the snowman, the sea or the sky', () => {
   assert.equal(bandHit(80, 60, BAND_ROWS), undefined);
 });
 
-test('session reserves the band below the AI and plays reactions there, without covering the AI', async () => {
+test('session reserves the band below the AI and plays its reactions there, without covering the AI', async () => {
   let output = '';
   const stream = { isTTY: true, columns: 80, rows: 30, write: (data) => { output += data; } };
   let clock = 0;
-  const session = new SessionTerminal(stream, { mode: 'terminal', sound: false, volume: 0.3 }, { ambient: true, now: () => clock });
+  const session = new SessionTerminal(stream, { ambient: true, now: () => clock });
   const physical = new xterm.Terminal({ cols: 80, rows: 30, allowProposedApi: true });
   try {
     assert.equal(session.terminal.rows, 20);
@@ -284,11 +275,12 @@ test('session reserves the band below the AI and plays reactions there, without 
     session.renderBand();
     assert.equal(output.length, once, 'an unchanged band is not repainted');
 
-    await session.react({ id: '1', timestamp: '', reaction: 'coffee', intensity: 1, message: '' });
-    session.renderBand();
+    // The user interrupts the AI, whose status sits at the bottom: the penguin facepalms below it.
+    await session.write('\x1b[19;1HInterrupted by user\x1b[2;3H');
+    session.render();
     await write(physical, output);
     assert.match(buffer.getLine(0).translateToString(true), /Assistant prêt/, 'the AI stays on screen');
-    assert.match(buffer.getLine(21).translateToString(true), /CAFÉ · Un petit café !/);
+    assert.match(buffer.getLine(21).translateToString(true), /FACEPALM · Bruh\./);
     const before = output.length;
     clock += 600;
     session.renderBand();
@@ -316,7 +308,7 @@ test('the mouse wheel scrolls the AI history, keys bring the live screen back', 
   assert.equal(input.read('\x1b[A').keys, '\x1b[A');
 
   const stream = { isTTY: true, columns: 80, rows: 30, write: () => {} };
-  const session = new SessionTerminal(stream, { mode: 'terminal', sound: false, volume: 0.3 }, { ambient: true, now: () => 0 });
+  const session = new SessionTerminal(stream, { ambient: true, now: () => 0 });
   try {
     await session.write(Array.from({ length: 60 }, (_, i) => `ligne ${i}`).join('\r\n'));
     assert.equal(session.scrolledBack, false);
@@ -333,7 +325,7 @@ test('a click on the band reaches the penguin', async () => {
   let painted = '';
   const stream = { isTTY: true, columns: 80, rows: 30, write: (text) => { painted += text; } };
   let now = 0;
-  const session = new SessionTerminal(stream, { mode: 'terminal', sound: false, volume: 0.3 }, { ambient: true, now: () => now });
+  const session = new SessionTerminal(stream, { ambient: true, now: () => now });
   try {
     now = 5000;
     session.renderBand();

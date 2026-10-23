@@ -33,7 +33,7 @@ test('a terminal behind on its output skips frames instead of piling them up', a
   let painted = '';
   const stream = { isTTY: true, columns: 80, rows: 30, writableNeedDrain: true, write: (text) => { painted += text; } };
   let now = 0;
-  const session = new SessionTerminal(stream, { mode: 'terminal', sound: false, volume: 0.3 }, { ambient: true, now: () => now });
+  const session = new SessionTerminal(stream, { ambient: true, now: () => now });
   const keep = setInterval(() => {}, 100);
   try {
     now = 5000;

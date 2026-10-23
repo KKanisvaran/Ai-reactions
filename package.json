@@ -1,35 +1,29 @@
 {
   "name": "ai-reactions",
   "version": "1.0.0",
-  "description": "Réactions animées et sonores pour les IA en terminal (Codex, Claude Code, Gemini CLI), via MCP.",
-  "main": "dist/index.js",
+  "description": "Un pingouin compagnon en pixel art qui vit sous ton IA en terminal (Codex, Claude Code, Gemini CLI) et réagit tout seul.",
   "engines": {
     "node": ">=24"
   },
   "scripts": {
     "preai": "npm run build",
     "ai": "node scripts/session.mjs",
-    "dev": "node src/index.ts",
     "build": "node -e \"require('fs').rmSync('dist',{recursive:true,force:true})\" && tsc -p tsconfig.json",
-    "start": "node dist/index.js",
-    "test": "npm run build && node --test test/*.test.mjs",
-    "demo": "node scripts/demo.mjs",
-    "demo:terminal": "node scripts/demo.mjs --terminal",
-    "watch": "node scripts/watch.mjs",
-    "reactions": "node scripts/reactions.mjs"
+    "test": "npm run build && node --test test/*.test.mjs"
   },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/KKanisvaran/Ai-reactions.git"
   },
   "keywords": [
-    "mcp",
     "cli",
     "terminal",
     "codex",
     "claude",
     "gemini",
-    "reactions"
+    "reactions",
+    "pixel-art",
+    "companion"
   ],
   "author": "KKanisvaran (KK LAB)",
   "license": "SEE LICENSE IN LICENSE",
@@ -39,11 +33,8 @@
   },
   "homepage": "https://github.com/KKanisvaran/Ai-reactions#readme",
   "dependencies": {
-    "@modelcontextprotocol/client": "2.3.1",
-    "@modelcontextprotocol/server": "2.3.1",
     "@xterm/headless": "6.0.0",
-    "node-pty": "1.1.0",
-    "zod": "^4.6.5"
+    "node-pty": "1.1.0"
   },
   "bin": {
     "ai-reactions": "bin/ai-reactions.mjs"
@@ -52,7 +43,6 @@
     "bin/",
     "dist/",
     "scripts/",
-    "windows/",
     "README.md",
     "LICENSE"
   ],

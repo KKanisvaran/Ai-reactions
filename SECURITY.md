@@ -8,15 +8,14 @@ GitHub). Réponse sous 7 jours ; un correctif est publié dès que possible.
 
 ## Ce que fait le projet, et ce qu’il ne fait pas
 
-- Le serveur MCP fonctionne **uniquement en local, sur stdio**. Il n’ouvre aucun
-  port et ne fait aucune requête réseau.
-- Chaque appel d’outil est validé strictement (Zod) avant tout effet ; les
-  paramètres inconnus ou hors limites sont refusés.
-- Le journal `~/.ai-reactions/reactions.jsonl` ne contient que les réactions, jamais
-  les conversations. Sa relecture rejette les caractères de contrôle (ESC, C1),
-  pour qu’aucune séquence ne puisse piloter le terminal.
+- Tout fonctionne **uniquement en local** : aucun port ouvert, aucune requête
+  réseau, aucune donnée enregistrée.
+- Le pingouin lit le bas de l’écran de l’IA, en mémoire, pour y repérer quelques
+  indices génériques (travail en cours, demande de permission, interruption,
+  erreur d’API). Il n’en garde que des oui/non : jamais le texte.
+- Les séquences de l’IA ne sont jamais relayées telles quelles au terminal : le
+  lanceur repeint lui-même son écran à partir d’une copie virtuelle.
 - Aucune simulation de clavier, injection de touches ou interruption du processus
   de l’IA. Le lanceur ne transmet à l’IA que les touches réellement saisies.
-- Les sons sont synthétisés en mémoire : aucun fichier téléchargé ni exécuté.
 - Sous Windows, les arguments du lanceur sont passés à PowerShell comme chaînes
   littérales, guillemets typographiques compris.

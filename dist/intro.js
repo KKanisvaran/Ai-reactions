@@ -1,30 +1,36 @@
 import { setTimeout as delay } from 'node:timers/promises';
 import { waitFrame } from "./frame-clock.js";
 import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, parseGraphics, queryTerminal } from "./mascot-render.js";
-import { reactionDefinitions } from "./reactions.js";
-import { effectOptions, startSound } from "./terminal-output.js";
-const font = {
-    K: ['██  ██', '██ ██ ', '████  ', '██ ██ ', '██  ██'],
-    L: ['██    ', '██    ', '██    ', '██    ', '██████'],
-    A: [' ████ ', '██  ██', '██████', '██  ██', '██  ██'],
-    B: ['█████ ', '██  ██', '█████ ', '██  ██', '█████ '],
-    ' ': ['  ', '  ', '  ', '  ', '  '],
-};
-const TITLE = 'KK LAB';
-const NOTE = ['Créé juste pour le plaisir,', 'en espérant vous faire sourire.'];
-/** The splash needs room for its note, the mascot when it fits; the keyword list, 21 lines. */
+/** The note, one sentence per line; on a narrow terminal, a sentence wraps between its pieces. */
+const NOTE = [
+    ['Ce projet a été créé', 'par pur plaisir,', 'et dédié à celles et ceux', 'qui le téléchargent.'],
+    ['Merci du fond du cœur :', 'vous me donnez la force', 'de continuer.'],
+    ['J’espère sincèrement', 'qu’il vous plaira.'],
+];
+const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
+/** The note's lines on a terminal `cols` wide. */
+function noteLines(cols) {
+    return NOTE.flatMap((pieces) => pieces.reduce((lines, piece) => {
+        const joined = lines.length ? `${lines.at(-1)} ${piece}` : piece;
+        if (lines.length && [...joined].length <= cols - 2)
+            lines[lines.length - 1] = joined;
+        else
+            lines.push(piece);
+        return lines;
+    }, []));
+}
+/** The splash needs room for its note, and for the mascot when it fits. */
 const SPLASH_MIN = { cols: 30, rows: 13 };
-const KEYWORDS_MIN = { cols: 54, rows: 22 };
 /** Seconds the mascot takes to draw itself; the signature and the note follow below it. */
 const DRAW = 1.6;
 const IMAGE_AT = DRAW;
 const SIGN_AT = DRAW + 0.2;
 const NOTE_AT = SIGN_AT + 0.5;
-const NOTE_SPEED = 30;
-/** The splash closes on its own once the note is read; the first launch then lists the keywords. */
-export const SPLASH_FOR = NOTE_AT + [...NOTE.join(' ')].length / NOTE_SPEED + 1.8;
-/** Text lines under the mascot: a gap, the signature, the note (on one or two lines) and a margin. */
-const BELOW = 5;
+const NOTE_SPEED = 60;
+/** The splash closes on its own once the note is read. */
+export const SPLASH_FOR = NOTE_AT + [...NOTE_TEXT].length / NOTE_SPEED + 1.8;
+/** Text lines under the mascot: a gap, the signature, the note and a margin. */
+const below = (cols) => 3 + noteLines(cols).length;
 /** The real image stays small: at most this many lines tall. */
 const MASCOT_LINES = 12;
 /**
@@ -32,15 +38,10 @@ const MASCOT_LINES = 12;
  * into a wolf, so it is left out rather than misdrawn.
  */
 const BLOCK_LINES = { min: 16, max: 22 };
-const amber = [232, 170, 72];
-const navy = [70, 98, 160];
-const fg = ([r, g, b]) => `\x1b[38;2;${r};${g};${b}m`;
-const mix = (a, b, k) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
 const RESET = '\x1b[0m';
 const DIM = '\x1b[38;2;150;160;180m';
 const TEXT = '\x1b[38;2;219;227;238m';
 const AMBER = '\x1b[1;38;2;232;170;72m';
-export const introKeywords = Object.values(reactionDefinitions).map(({ keyword, summary }) => ({ keyword, summary }));
 const center = (text, width, cols) => `${' '.repeat(Math.max(0, Math.floor((cols - width) / 2)))}${text}`;
 /** The mascot's box in cells: small, centered with the text below it. */
 function mascotBox(cols, rows, graphics) {
@@ -48,14 +49,14 @@ function mascotBox(cols, rows, graphics) {
     // Pixels per cell: two stacked half blocks, or the real cell size for an image.
     const [cellWidth, cellHeight] = cell ? [cell.width, cell.height] : [1, 2];
     const widthFor = (lines) => Math.ceil(Math.min(lines * cellHeight, cell ? mascotHeight : Infinity) * mascotAspect / cellWidth);
-    let lines = Math.min(cell ? MASCOT_LINES : BLOCK_LINES.max, rows - BELOW);
+    let lines = Math.min(cell ? MASCOT_LINES : BLOCK_LINES.max, rows - below(cols));
     while (lines > 0 && widthFor(lines) > cols - 2)
         lines--;
     if (lines < (cell ? 8 : BLOCK_LINES.min))
         return undefined;
     const width = widthFor(lines);
     return {
-        lines, width, left: Math.floor((cols - width) / 2), top: Math.floor((rows - lines - BELOW + 1) / 2),
+        lines, width, left: Math.floor((cols - width) / 2), top: Math.floor((rows - lines - below(cols) + 1) / 2),
         image: Boolean(cell), pixels: Math.min(lines * cellHeight, mascotHeight),
     };
 }
@@ -72,7 +73,7 @@ function splashFrame(seconds, cols, rows, graphics) {
             lines.push(`${' '.repeat(box.left)}${line}`);
     }
     lines.push('', seconds >= SIGN_AT ? center(`${DIM}by ${AMBER}KK LAB${RESET}`, 9, cols) : '');
-    const note = [...NOTE.join(' ')].length <= cols - 2 ? [NOTE.join(' ')] : NOTE;
+    const note = noteLines(cols);
     let typed = Math.max(0, Math.floor((seconds - NOTE_AT) * NOTE_SPEED));
     for (const line of note) {
         const shown = [...line].slice(0, typed);
@@ -81,35 +82,17 @@ function splashFrame(seconds, cols, rows, graphics) {
     }
     return lines;
 }
-function titleLines(reveal) {
-    const rows = font.K.map((_, row) => [...TITLE].map((letter) => font[letter][row]).join(' '));
-    const width = rows[0].length;
-    const shown = Math.round(width * Math.min(1, Math.max(0, reveal)));
-    return rows.map((row) => [...row].map((char, x) => x >= shown ? ' '
-        : `${fg(mix(navy, amber, x / width))}${char}`).join('') + RESET);
-}
-/** First launch, after the splash: the chat keywords, until a key is pressed. */
-function keywordsFrame(seconds) {
-    const panel = titleLines(seconds / 0.5);
-    panel.push(seconds >= 0.5 ? `${DIM}ai-reactions · réactions animées pour IA en terminal${RESET}` : '', '');
-    panel.push(seconds >= 0.6 ? `Tape un mot-clé dans le chat de ton IA :` : '');
-    introKeywords.forEach(({ keyword, summary }, i) => {
-        panel.push(seconds >= 0.7 + i * 0.09 ? `  ${fg(amber)}${keyword.padEnd(11)}${RESET}${DIM}${summary}${RESET}` : '');
-    });
-    const prompt = seconds >= 2 && Math.floor(seconds * 2) % 2 === 0 ? `${DIM}Appuie sur une touche pour continuer…${RESET}` : '';
-    return [...panel, '', prompt].map((line) => line && ` ${line}`);
-}
 /**
  * Pure frame builder (tests and static output); `seconds` drives the reveal.
  * With a Sixel image, the mascot's lines stay blank: `introImage` draws it.
  */
-export function introFrame(seconds, cols = 120, rows = 34, keywords = true, graphics) {
-    return keywords && seconds >= SPLASH_FOR ? keywordsFrame(seconds - SPLASH_FOR) : splashFrame(seconds, cols, rows, graphics);
+export function introFrame(seconds, cols = 120, rows = 34, graphics) {
+    return splashFrame(seconds, cols, rows, graphics);
 }
 let sixel;
 /** The Sixel mascot for this frame, centered at the top, or undefined when it is drawn in half blocks. */
-export function introImage(seconds, cols, rows, keywords, graphics) {
-    if (seconds < IMAGE_AT || (keywords && seconds >= SPLASH_FOR))
+export function introImage(seconds, cols, rows, graphics) {
+    if (seconds < IMAGE_AT)
         return undefined;
     const box = mascotBox(cols, rows, graphics);
     if (!box?.image)
@@ -120,24 +103,18 @@ export function introImage(seconds, cols, rows, keywords, graphics) {
 }
 /** Plain text for captured output: no cursor control, no colors. */
 export function introText() {
-    return ['KK LAB · ai-reactions', NOTE.join(' '), 'Tape un mot-clé dans le chat de ton IA :',
-        ...introKeywords.map(({ keyword, summary }) => `  ${keyword.padEnd(11)}${summary}`)].join('\n');
+    return ['KK LAB · ai-reactions', NOTE_TEXT].join('\n');
 }
-/**
- * The KK LAB mascot appears in large, with its note below, then closes on its
- * own. With `keywords`, the chat keywords follow until a key is pressed.
- */
-export async function playIntro(stdout = process.stdout, stdin = process.stdin, { timeoutMs = 20000, keywords = true } = {}) {
+/** The KK LAB mascot appears, with its note below, then closes on its own; a key skips it. */
+export async function playIntro(stdout = process.stdout, stdin = process.stdin) {
     const cols = stdout.columns ?? 80, rows = stdout.rows ?? 24;
-    if (!stdout.isTTY || !stdin.isTTY || cols < SPLASH_MIN.cols || rows < SPLASH_MIN.rows) {
-        if (keywords)
-            stdout.write(`${introText()}\n`);
+    // Captured output gets the note as plain text; a terminal too small, nothing.
+    if (!stdout.isTTY || !stdin.isTTY) {
+        stdout.write(`${introText()}\n`);
         return;
     }
-    // Too small for the keyword list: the splash alone, then the list as plain text.
-    const list = keywords && cols >= KEYWORDS_MIN.cols && rows >= KEYWORDS_MIN.rows;
-    const plainList = keywords && !list;
-    keywords = list;
+    if (cols < SPLASH_MIN.cols || rows < SPLASH_MIN.rows)
+        return;
     let presses = 0, replies = '';
     // Terminal reports (focus, cursor position, device attributes, cell size) are not key presses.
     const onKey = (data) => {
@@ -160,32 +137,18 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
             for (const asked = performance.now(); !(graphics = parseGraphics(replies)) && performance.now() - asked < 400;)
                 await delay(20);
         }
-        if (keywords) {
-            try {
-                const options = effectOptions();
-                if (options.sound)
-                    void startSound({ reaction: 'hype', intensity: 1 }, options.volume).finished.catch(() => { });
-            }
-            catch { /* The intro stays silent with invalid audio settings. */ }
-        }
-        let start = performance.now();
+        const start = performance.now();
         // Only changed lines are rewritten: the truecolor mascot is heavy for ConPTY.
         let previous = [], size = '', drawn = false, deadline = start;
         for (;; deadline = await waitFrame(deadline)) {
-            let seconds = (performance.now() - start) / 1000;
-            // A key skips the splash; on the keyword list, it closes the intro.
-            if (presses && keywords && seconds < SPLASH_FOR) {
-                presses = 0;
-                start -= (SPLASH_FOR - seconds) * 1000;
-                seconds = SPLASH_FOR;
-            }
-            if (presses || seconds * 1000 >= (keywords ? SPLASH_FOR * 1000 + timeoutMs : SPLASH_FOR * 1000))
+            const seconds = (performance.now() - start) / 1000;
+            if (presses || seconds >= SPLASH_FOR)
                 break;
             // A terminal still busy with the last frame skips this one rather than fall behind.
             if (stdout.writableNeedDrain)
                 continue;
             const width = stdout.columns ?? cols, height = stdout.rows ?? rows;
-            const frame = introFrame(seconds, width, height, keywords, graphics);
+            const frame = introFrame(seconds, width, height, graphics);
             if (frame.length !== previous.length || size !== `${width}x${height}`) {
                 stdout.write('\x1b[2J');
                 previous = [];
@@ -195,7 +158,7 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
             const changes = frame.map((line, i) => line === previous[i] ? '' : `\x1b[${i + 1};1H${line}\x1b[K`).join('');
             if (changes)
                 stdout.write(changes);
-            const image = drawn ? undefined : introImage(seconds, width, height, keywords, graphics);
+            const image = drawn ? undefined : introImage(seconds, width, height, graphics);
             if (image) {
                 stdout.write(image);
                 drawn = true;
@@ -209,6 +172,4 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
         stdin.pause();
         stdout.write(`${RESET}\x1b[?25h\x1b[?1049l`);
     }
-    if (plainList)
-        stdout.write(`${introText()}\n`);
 }
