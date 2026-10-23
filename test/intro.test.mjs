@@ -5,9 +5,9 @@ import { imagesAllowed, mascotSixel, parseGraphics } from '../dist/mascot-render
 
 const plain = (line) => line.replace(/\x1b\[[0-9;]*m/g, '');
 const art = (frame) => frame.map(plain).join('').split(/[▀▄]/).length - 1;
-const note = 'Ce projet a été créé par pur plaisir, et dédié à celles et ceux qui le téléchargent.';
-const thanks = 'Merci du fond du cœur : vous me donnez la force de continuer.';
-const wish = 'J’espère sincèrement qu’il vous plaira.';
+const note = 'Bienvenue sur la banquise !';
+const thanks = 'Ce petit pingouin est ravi de vous tenir compagnie pendant que vous codez.';
+const wish = 'Merci de tout cœur de l’avoir installé : vous allez bien vous amuser ensemble !';
 
 test('intro shows the KK LAB mascot, large enough to read and centered, with its note below', () => {
   const splash = introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain);
@@ -27,16 +27,40 @@ test('intro shows the KK LAB mascot, large enough to read and centered, with its
       for (const line of frame) assert.ok([...line].length <= cols, `${cols}x${rows}: ${line}`);
     }
   }
-  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('qu’il vous plaira.'), 'the note wraps on narrow terminals');
+  assert.ok(introFrame(SPLASH_FOR - 0.5, 50, 22).map(plain).join('\n').includes('vous amuser ensemble !'), 'the note wraps on narrow terminals');
   // The mascot draws itself (outline, then fill), then the signature and the note type in.
   assert.ok(art(introFrame(0.4)) < art(introFrame(1)));
   assert.ok(art(introFrame(1)) < art(introFrame(2)));
   assert.equal(art(introFrame(2)), art(introFrame(3)));
-  assert.ok(!introFrame(1).map(plain).some((line) => line.includes('KK LAB') || line.includes('plaisir')));
+  assert.ok(!introFrame(1).map(plain).some((line) => line.includes('KK LAB') || line.includes('banquise')));
   // Small terminals, like a VS Code panel, get the signature and the note, never a blurred mascot.
   const small = introFrame(SPLASH_FOR - 0.5, 80, 14).map(plain);
   assert.equal(art(small), 0);
-  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('qui le téléchargent.')) && small.some((line) => line.includes(wish)));
+  assert.ok(small.some((line) => line.includes('by KK LAB')) && small.some((line) => line.includes('pendant que vous codez.')) && small.some((line) => line.includes('vous allez bien vous amuser ensemble !')));
+});
+
+test('the note types itself in order, slowly enough to read, then says how to skip', () => {
+  const sentences = [note, thanks, wish];
+  for (const [cols, rows] of [[120, 34], [80, 24], [50, 22]]) {
+    let finished = -1;
+    const noteOf = (frame) => frame.slice(frame.findIndex((line) => line.includes('by KK LAB')) + 1, -1).map((line) => line.trim());
+    const whole = noteOf(introFrame(SPLASH_FOR - 0.1, cols, rows).map(plain));
+    for (let t = 0; t < SPLASH_FOR; t += 0.05) {
+      const frame = introFrame(t, cols, rows).map(plain);
+      if (!frame.some((line) => line.includes('by KK LAB'))) continue;
+      const lines = noteOf(frame);
+      // A line only starts once the one before it is complete: nothing shows after the line being typed.
+      const typing = lines.findIndex((line, i) => line !== whole[i]);
+      if (typing >= 0) lines.slice(typing + 1).forEach((line) => assert.equal(line, '', `${cols}x${rows} at ${t.toFixed(2)}s: « ${line} » before « ${whole[typing]} » is done`));
+      lines.forEach((line, i) => assert.ok(whole[i].startsWith(line), `${cols}x${rows} at ${t.toFixed(2)}s: « ${line} »`));
+      if (finished < 0 && lines.join(' ').includes(wish)) finished = t;
+    }
+    assert.ok(finished > 0 && SPLASH_FOR - finished >= 4, `${cols}x${rows}: ${(SPLASH_FOR - finished).toFixed(1)} s left to read it`);
+  }
+  const typing = introFrame(SPLASH_FOR - 9, 120, 34).map(plain).join('\n');
+  assert.ok(sentences.some((sentence) => !typing.includes(sentence)), 'still typing midway');
+  assert.match(introFrame(SPLASH_FOR - 0.5, 120, 34).map(plain).join('\n'), /une touche pour passer/);
+  assert.doesNotMatch(introFrame(4, 120, 34).map(plain).join('\n'), /une touche pour passer/, 'the hint waits for the note');
 });
 
 test('Sixel terminals get the real mascot image, centered and sized from their cells', () => {

@@ -8,7 +8,7 @@ import { PENGUIN_WIDTH, penguinPalette, penguinProps } from "./penguin.js";
  * The swim, in seconds from its start: it waddles to the edge of the floe,
  * crouches, jumps, plunges, floats in its ring, swims back and climbs out.
  */
-const SWIM = { out: 1.3, crouch: 1.6, jump: 2.35, plunge: 3, float: 13, back: 14.2, climb: 14.8, home: 16.6 };
+export const SWIM = { out: 1.3, crouch: 1.6, jump: 2.35, plunge: 3, float: 13, back: 14.2, climb: 14.8, home: 16.6 };
 /** How far it walks to the edge of the floe, and where it floats, in pixels from its place. */
 const EDGE = 8, OFFSHORE = 32, ALONGSIDE = 26;
 /** Pixels of sea it needs beyond its place, ring and ripples included. */
@@ -41,23 +41,23 @@ export function answer(target, clicks) {
         return 'wish';
     return petting[Math.min(clicks, petting.length) - 1];
 }
-const beat = (s, speed) => Math.floor(s * speed) % 2;
+export const beat = (s, speed) => Math.floor(s * speed) % 2;
 /** A little jump: 0 on the ground, up to `height` pixels at the top. */
-const jump = (s, period, height) => -Math.round(Math.sin(Math.PI * ((s % period) / period)) * height);
+export const jump = (s, period, height) => -Math.round(Math.sin(Math.PI * ((s % period) / period)) * height);
 /** 0 → 1 between `start` and `end` seconds. */
-const progress = (s, start, end) => Math.min(1, Math.max(0, (s - start) / (end - start)));
+export const progress = (s, start, end) => Math.min(1, Math.max(0, (s - start) / (end - start)));
 /** Slow at both ends, like a real move. */
-const ease = (p) => p * p * (3 - 2 * p);
+export const ease = (p) => p * p * (3 - 2 * p);
 /**
  * A waddle from `from` to `to` pixels at `speed` pixels a second: one pixel
  * at a time, rocking up on every other step.
  */
-function waddle(s, from, to, speed, pose) {
+export function waddle(s, from, to, speed, pose) {
     const steps = Math.min(Math.abs(to - from), Math.floor(s * speed));
     const moving = steps < Math.abs(to - from);
     return { pose, dx: from + Math.sign(to - from) * steps, dy: moving && steps % 2 ? -1 : 0 };
 }
-function swimFrame(s) {
+export function swimFrame(s) {
     if (s < SWIM.out)
         return { ...waddle(s, 0, EDGE, EDGE / (SWIM.out - 0.1), 'right'), ring: true };
     // It gathers itself at the edge, eyes shut.

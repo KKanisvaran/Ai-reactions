@@ -2,11 +2,12 @@
 // the AI is doing, never over the AI.
 // Everything here is pure and driven by the clock the caller passes in; the
 // AI's screen is only read in memory, never logged.
-import { SWIM_ROOM, activityFrame, activityLength, answer, drawActivity, drawBehind, homeward, idleActivities, underWater } from "./companion.js";
+import { SWIM, SWIM_ROOM, activityFrame, activityLength, answer, drawActivity, drawBehind, homeward, idleActivities, underWater } from "./companion.js";
 import { DECOR_HEIGHT, HORIZON, SNOWMAN_WIDTH, backdrop, decorPixels } from "./decor.js";
 import { PENGUIN_HEIGHT, PENGUIN_WIDTH, penguinPalette, penguinPoses } from "./penguin.js";
 import { reactionDefinitions } from "./reactions.js";
 import { drawAsk, drawScene, drawSleep } from "./scenes.js";
+import { fishingRod, stories, storyBeat, storyFits, storyLength, storyShift } from "./stories.js";
 /**
  * The band's height: the penguin's 20 pixel rows, two per line. It never
  * changes: like a picture on a web page, the penguin keeps its size and only
@@ -22,12 +23,20 @@ const SLOW_AT = 150_000;
 const QUIET_AFTER = 300_000;
 /** Seconds of fishing in a long pause, before the penguin falls asleep. */
 const FISHING_FOR = 120;
-const VISIT_FOR = 9000;
 const DRAW_FOR = 2400;
 const COOLDOWN = 20_000;
 /** Clicks closer than this count as one petting session. */
 const PETTING = 3000;
-const visitors = ['bird', 'fish', 'star'];
+/** The first episode, once the penguin has settled in. */
+const FIRST_STORY = 10_000;
+/** The quiet between two episodes: it blinks, looks around, waves. */
+const BETWEEN_STORIES = 18_000, BETWEEN_SPREAD = 14_000;
+/** Back within this, an episode resumes at the shot it left; later, it starts over. */
+const RESUME_WITHIN = 90_000;
+/** Fewer episodes than this fit the band: it would tell the same ones over and over. */
+const MIN_STORIES = 4;
+/** What it does between two episodes: small things, the episodes are the show. */
+const interlude = ['look', 'look', 'wave', 'stroll'];
 export function reactionDuration(intensity) {
     return 4000 + 1500 * (Math.min(3, Math.max(1, intensity)) - 1);
 }
@@ -76,9 +85,13 @@ export class AmbientMood {
     flags = { asking: false, interrupted: false, failed: false };
     reaction;
     lastAuto = new Map();
-    visitor;
-    visitStart = 0;
-    nextVisit;
+    /** The episodes, in the order this session tells them. */
+    playlist;
+    told = 0;
+    /** The friends were introduced this session. */
+    introduced = false;
+    story;
+    nextStory;
     activity;
     lastActivity;
     nextActivity;
@@ -90,8 +103,93 @@ export class AmbientMood {
         this.start = this.since = this.lastActive = now;
         this.calmSince = now;
         this.seed = seed >>> 0;
-        this.nextVisit = now + 8000 + this.random() * 12_000;
         this.nextActivity = now + 5000 + this.random() * 4000;
+        this.nextStory = now + FIRST_STORY;
+        // Shuffled once: every session tells them all before telling one again.
+        this.playlist = stories.map((_, i) => i);
+        for (let i = this.playlist.length - 1; i > 0; i--) {
+            const j = Math.floor(this.random() * (i + 1));
+            [this.playlist[i], this.playlist[j]] = [this.playlist[j], this.playlist[i]];
+        }
+    }
+    /** Whether `story` fits the band as it is now. */
+    fits(story) {
+        const layout = bandLayout(this.columns);
+        return storyFits(story, this.columns, layout.penguin, layout.snowman !== undefined);
+    }
+    /** Episodes play when nothing else is going on; they pause for the AI and for clicks. */
+    tell(now) {
+        // The AI comes first: the moment it starts working, the episode waits.
+        const calm = this.scene === 'idle' && this.busySince === undefined && !this.reaction && !this.flags.asking && !this.activity?.user
+            && now - this.finishedAt >= FINISHED_FOR && now - this.start >= DRAW_FOR;
+        if (!this.storytelling()) {
+            this.story = undefined;
+            return;
+        }
+        if (this.story) {
+            const story = stories[this.story.index];
+            if (!this.fits(story)) {
+                this.story = undefined;
+                return;
+            }
+            // Out at sea, it swims home rather than vanish from the water.
+            if (!calm) {
+                if (this.swimInstead(now))
+                    this.hurryHome(now);
+                else
+                    this.story.paused ??= now;
+                return;
+            }
+            if (this.story.paused !== undefined) {
+                const left = this.story.paused;
+                // Back soon: from the start of the shot it was in. Much later: from the start.
+                const shot = storyBeat(story, (left - this.story.start) / 1000);
+                this.story.start = now - left > RESUME_WITHIN ? now : now - (shot?.start ?? 0) * 1000;
+                this.story.paused = undefined;
+            }
+            if (now - this.story.start >= storyLength(story) * 1000) {
+                this.story = undefined;
+                this.nextStory = now + BETWEEN_STORIES + this.random() * BETWEEN_SPREAD;
+            }
+            return;
+        }
+        if (!calm || this.activity || now < this.nextStory)
+            return;
+        // First, the friends are introduced: then every episode knows who is who.
+        if (!this.introduced) {
+            const index = stories.findIndex((story) => story.opening && this.fits(story));
+            this.introduced = true;
+            if (index >= 0) {
+                this.story = { index, start: now };
+                return;
+            }
+        }
+        for (let tries = 0; tries < this.playlist.length; tries++) {
+            const index = this.playlist[this.told++ % this.playlist.length];
+            if (!stories[index].opening && this.fits(stories[index])) {
+                this.story = { index, start: now };
+                return;
+            }
+        }
+        this.nextStory = now + 5000;
+    }
+    /** Whether enough episodes fit the band: too narrow, it keeps itself busy instead. */
+    storytelling() {
+        return stories.filter((story) => this.fits(story)).length >= MIN_STORIES;
+    }
+    /**
+     * The swim told as an episode becomes the swim itself, at the same second,
+     * when something cuts it: the penguin is in the water and must get back.
+     */
+    swimInstead(now) {
+        const story = this.story, elapsed = story ? now - story.start : 0;
+        if (!story || story.paused !== undefined || stories[story.index].id !== 'baignade' || elapsed >= SWIM.home * 1000)
+            return false;
+        this.activity = { name: 'swim', start: now - elapsed, end: now - elapsed + SWIM.home * 1000, user: false };
+        this.lastActivity = 'swim';
+        this.story = undefined;
+        this.nextStory = now + BETWEEN_STORIES + this.random() * BETWEEN_SPREAD;
+        return true;
     }
     random() {
         this.seed = (Math.imul(this.seed, 1664525) + 1013904223) >>> 0;
@@ -126,7 +224,9 @@ export class AmbientMood {
     poke(target, now, at) {
         this.clicks = [...this.clicks.filter((time) => now - time < PETTING), now];
         this.lastActive = now;
-        // Out at sea in its ring, a click pets it where it floats.
+        // Out at sea in its ring, a click pets it where it floats; elsewhere it lets it swim.
+        if (this.swimInstead(now) && target !== 'penguin' && target !== 'sea')
+            return;
         if (this.activity?.name === 'swim' && (target === 'penguin' || target === 'sea')) {
             this.activity.petted = now;
             return;
@@ -225,25 +325,15 @@ export class AmbientMood {
             this.activity = undefined;
             this.nextActivity = now + 6000 + this.random() * 8000;
         }
-        if (this.scene !== 'idle' || this.reaction) {
-            if (this.visitor)
-                this.nextVisit = now + 25_000 + this.random() * 25_000;
-            this.visitor = undefined;
-        }
-        else if (this.visitor && now - this.visitStart >= VISIT_FOR) {
-            this.visitor = undefined;
-            this.nextVisit = now + 25_000 + this.random() * 25_000;
-        }
-        else if (!this.visitor && !this.activity && now >= this.nextVisit) {
-            this.visitor = visitors[Math.floor(this.random() * visitors.length)];
-            this.visitStart = now;
-        }
-        // Left alone, it keeps itself busy: a different little thing each time.
-        if (!this.activity && now >= this.nextActivity) {
-            const free = !this.reaction && !this.visitor && !this.flags.asking;
+        this.tell(now);
+        // Left alone, it keeps itself busy: small things between two episodes, or,
+        // in a band too narrow for them, a different hobby each time.
+        if (!this.activity && !this.story && now >= this.nextActivity) {
+            const free = !this.reaction && !this.flags.asking;
             if (free && this.scene === 'idle' && now - this.finishedAt >= FINISHED_FOR) {
                 const sea = this.columns >= bandLayout(this.columns).penguin + SWIM_ROOM;
-                const choices = idleActivities.filter((name) => name !== this.lastActivity && (name !== 'swim' || sea));
+                const pool = this.storytelling() ? interlude : idleActivities;
+                const choices = pool.filter((name) => name !== this.lastActivity && (name !== 'swim' || sea));
                 this.begin(choices[Math.floor(this.random() * choices.length)], now);
             }
             else if (free && this.scene === 'working' && now - this.since >= 8000) {
@@ -263,7 +353,6 @@ export class AmbientMood {
             clock: (now - this.start) / 1000,
             work: (this.scene === 'working' ? now - this.workStart : this.work) / 1000,
             drawn: Math.min(1, (now - this.start) / DRAW_FOR),
-            visit: this.visitor ? (now - this.visitStart) / 1000 : 0,
         };
         if (this.flags.asking)
             view.asking = true;
@@ -271,8 +360,8 @@ export class AmbientMood {
             view.finished = true;
         if (this.reaction)
             view.reaction = { name: this.reaction.name, intensity: this.reaction.intensity, seconds: (now - this.reaction.start) / 1000 };
-        if (this.visitor)
-            view.visitor = this.visitor;
+        if (this.story && this.story.paused === undefined)
+            view.story = { id: stories[this.story.index].id, seconds: (now - this.story.start) / 1000 };
         if (this.activity) {
             const { name, start, user, x, y, petted } = this.activity;
             view.doing = { name, seconds: (now - start) / 1000 };
@@ -321,8 +410,10 @@ export function penguinFrame(view) {
         return activityFrame(doing);
     const still = (pose) => ({ pose, dx: 0, dy: 0 });
     const reaction = view.reaction;
-    if (!reaction)
-        return still(scenePose(view));
+    if (!reaction) {
+        const shot = storyShot(view);
+        return shot ? shot.beat.penguin(shot.s, shot.u) : still(scenePose(view));
+    }
     const s = reaction.seconds, step = Math.floor(s * 3) % 2;
     switch (reaction.name) {
         // It celebrates: two hops, then the cape.
@@ -339,6 +430,15 @@ export function penguinFrame(view) {
         case 'chill':
         case 'ez': return still('shades');
     }
+}
+/**
+ * The penguin's frame in a band `columns` wide: during an episode, beside
+ * Flocon, it stands a little further right so its widest poses miss him.
+ */
+export function bandFrame(view, columns) {
+    const frame = penguinFrame(view), shot = storyShot(view);
+    const lift = shot && bandLayout(columns).snowman !== undefined ? storyShift(shot.story) : 0;
+    return lift ? { ...frame, dx: frame.dx + lift } : frame;
 }
 /** The penguin's pose for what is happening now. */
 export function penguinPose(view) {
@@ -361,8 +461,6 @@ function scenePose(view) {
         return 'happy';
     if (blinking(t))
         return 'closed';
-    if (view.visitor && view.visit > 5)
-        return 'right';
     // Idle, it looks around for a moment every few seconds.
     const beat = Math.floor(t / 6);
     return beat > 0 && t % 6 < 1.6 ? fidgets[(Math.imul(beat, 0x9e3779b1) >>> 0) % fidgets.length] : 'neutral';
@@ -411,19 +509,15 @@ const bold = (hex) => `\x1b[1;38;2;${rgb(hex)}m`;
 const mixHex = (a, b) => [0, 2, 4]
     .map((i) => Math.round((parseInt(a.slice(i, i + 2), 16) + parseInt(b.slice(i, i + 2), 16)) / 2).toString(16).padStart(2, '0')).join('');
 const tint = { title: bold('e8aa48'), text: `\x1b[38;2;${rgb('dbe3ee')}m` };
-/**
- * The rest of the fishing rod, from the penguin's flipper up to its tip, and
- * the line down to a bobber in the sea beyond the floe.
- */
-function fishingLine(canvas, left, clock) {
-    const set = (x, y, color) => { if (canvas[y]?.[x] !== undefined)
-        canvas[y][x] = color; };
-    for (let i = 0; i <= 6; i++)
-        set(left + 18 + i, 12 - i, penguinPalette.R);
-    const [tipX, tipY] = [left + 24, 6], [bobX, bobY] = [left + 30, 17 + Math.round(Math.sin(clock * 2) * 0.5)];
-    for (let y = tipY + 1; y < bobY; y++)
-        set(Math.round(tipX + (bobX - tipX) * (y - tipY) / (bobY - tipY)), y, 'c8d6e4');
-    set(bobX, bobY, penguinPalette.O);
+/** Characters a second the narrator types. */
+const NARRATOR_SPEED = 40;
+/** The episode being told, and the shot playing now; none while a reaction plays. */
+export function storyShot(view) {
+    if (!view.story || view.reaction || activeDoing(view))
+        return undefined;
+    const story = stories.find(({ id }) => id === view.story.id);
+    const shot = story && storyBeat(story, view.story.seconds);
+    return shot && { ...shot, story };
 }
 /** Where things stand in a band `columns` wide, in pixels from the left. */
 export function bandLayout(columns) {
@@ -459,12 +553,14 @@ export function bandCells(view, columns) {
     };
     const { snowman, penguin: tx, floe } = bandLayout(width);
     const penguinWidth = PENGUIN_WIDTH;
-    const visit = view.visitor ? Math.min(1, view.visit / (VISIT_FOR / 1000)) : 0;
-    const canvas = decorPixels(width, { clock: view.clock, floe, snowman, visitor: view.visitor, visit });
-    const frame = penguinFrame(view), pixels = penguinPixels(view, frame.pose);
-    const doing = activeDoing(view);
+    const canvas = decorPixels(width, { clock: view.clock, floe, snowman });
+    const frame = bandFrame(view, width), pixels = penguinPixels(view, frame.pose);
+    const doing = activeDoing(view), shot = storyShot(view);
+    const lift = shot && snowman !== undefined ? storyShift(shot.story) : 0;
+    const place = { canvas, left: tx + lift, floe, sea: HORIZON + 1, width, snowman, clock: view.clock };
     if (doing)
         drawBehind(doing, frame, { canvas, left: tx, snowman, sea: HORIZON + 1, floe });
+    shot?.beat.behind?.(place, shot.s, shot.u);
     const px = tx + frame.dx + (PENGUIN_WIDTH - pixels[0].length) / 2;
     pixels.forEach((line, y) => [...line].forEach((pixel, x) => {
         if (pixel === '.' || underWater(frame, px + x, y + frame.dy, floe))
@@ -473,12 +569,14 @@ export function bandCells(view, columns) {
             canvas[y + frame.dy][px + x] = penguinPalette[pixel];
     }));
     if (view.drawn >= 1 && frame.pose === 'fishing')
-        fishingLine(canvas, tx, view.clock);
+        fishingRod(canvas, tx + frame.dx, HORIZON + 1, view.clock, shot?.beat.dip?.(shot.s, shot.u) ?? 0, frame.dy);
     if (doing)
         drawActivity(doing, frame, { canvas, left: tx, snowman, sea: HORIZON + 1, floe });
+    shot?.beat.draw?.(place, shot.s, shot.u);
     // Beside the penguin, under the caption, down to the level of its feet;
     // further out while it swims home.
-    const x = tx + penguinWidth + 3 + Math.max(0, frame.dx), room = width - x - 1;
+    // An episode's narrator keeps its place: the penguin walks and swims below its line.
+    const x = tx + penguinWidth + 3 + (shot ? lift + (shot.beat.caption ?? 0) : Math.max(0, frame.dx)), room = width - x - 1;
     const stage = { canvas, left: x, room, top: captionRow * 2 + 3, bottom: height - 2 };
     if (view.reaction) {
         const definition = reactionDefinitions[view.reaction.name];
@@ -486,6 +584,20 @@ export function bandCells(view, columns) {
         const caption = [...` · ${definition.messages[view.reaction.intensity - 1]}`], space = room - [...definition.title].length;
         write(x + [...definition.title].length, caption.length > space ? `${caption.slice(0, space - 1).join('')}…` : caption.join(''), tint.text);
         drawScene(view.reaction.name, view.reaction.seconds, stage);
+    }
+    else if (shot) {
+        // First the episode's title, alone, like a card; then the narrator, in plain
+        // text; a character's name, in color, only before what that character says.
+        const parts = shot.title ? [{ text: `ÉPISODE : ${shot.story.title.toUpperCase()}`, style: tint.title }]
+            : shot.beat.who ? [{ text: shot.beat.who, style: tint.title }, { text: ` : « ${shot.beat.say} »`, style: tint.text }]
+                : [{ text: shot.beat.say, style: tint.text }];
+        let budget = shot.title ? Infinity : Math.floor(shot.s * NARRATOR_SPEED), at = x;
+        for (const { text, style } of parts) {
+            const chars = [...text].slice(0, Math.max(0, Math.min(budget, x + room - at)));
+            write(at, chars.join(''), style);
+            at += chars.length;
+            budget -= chars.length;
+        }
     }
     else if (view.drawn >= 1 && view.scene === 'quiet' && view.seconds >= FISHING_FOR) {
         drawSleep(view.clock, stage);

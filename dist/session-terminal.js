@@ -1,5 +1,5 @@
 import xterm from '@xterm/headless';
-import { AmbientMood, bandCells, bandHit, bandRows, paintCells, penguinFrame, readSignals } from "./ambient.js";
+import { AmbientMood, bandCells, bandFrame, bandHit, bandRows, paintCells, readSignals } from "./ambient.js";
 import { FRAME_MS, startFrames } from "./frame-clock.js";
 const BUSY_ROWS = 15;
 /** Unchanged cells between two changes are rewritten when cheaper than moving the cursor. */
@@ -210,7 +210,7 @@ export class SessionTerminal {
         const typed = this.lastInput > this.lastTick;
         this.lastTick = now;
         const view = this.mood.update(now, { ...signals, typed });
-        this.penguinAway = penguinFrame(view).dx;
+        this.penguinAway = bandFrame(view, this.terminal.cols).dx;
         const cells = bandCells(view, this.terminal.cols);
         // Only the cells that changed since the last paint: snow and stars move a
         // few pixels at a time, and every byte goes through the terminal.
