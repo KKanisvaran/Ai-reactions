@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import xterm from '@xterm/headless';
 import { AmbientMood, ambientBand, ambientEnabled, bandHit, bandRows, BAND_ROWS, blinking, looksBusy, penguinFrame, penguinPose, readSignals } from '../dist/ambient.js';
+import { stories, storyBeat, storyLength } from '../dist/stories.js';
 import { penguinPoses, PENGUIN_HEIGHT } from '../dist/penguin.js';
 import { reactionDefinitions } from '../dist/reactions.js';
 import { InputReader, leftClick } from '../dist/mouse.js';
@@ -58,9 +59,9 @@ test('short work gets no reward, quick wins are easy, and interruptions get a fa
   const short = new AmbientMood(0, 7);
   short.update(0, busy); short.update(2000, busy); short.update(5000, calm);
   assert.equal(short.update(8500, calm).reaction, undefined);
-  let visitor;
-  for (let now = 8500; now < 60_000 && !visitor; now += 500) visitor = short.update(now, calm).visitor;
-  assert.ok(['bird', 'fish', 'star'].includes(visitor));
+  let story;
+  for (let now = 8500; now < 60_000 && !story; now += 500) story = short.update(now, calm).story;
+  assert.ok(stories.some(({ id }) => id === story?.id), 'calm again, it tells an episode');
 
   const quick = new AmbientMood(0, 3);
   quick.update(0, busy); quick.update(2000, busy); quick.update(25_000, calm);
@@ -85,7 +86,7 @@ test('band draws the penguin, then every reaction beside it, at the requested wi
   const base = { scene: 'idle', seconds: 1, clock: 5, work: 75, drawn: 1, visit: 0 };
   const views = [
     { ...base, drawn: 0.4, clock: 1 }, base, { ...base, scene: 'working' }, { ...base, scene: 'quiet' },
-    { ...base, visitor: 'bird', visit: 4 }, { ...base, asking: true },
+    { ...base, story: { id: 'peche', seconds: 12 } }, { ...base, asking: true },
     ...Object.keys(reactionDefinitions).map((name) => ({ ...base, reaction: { name, intensity: 2, seconds: 1.3 } })),
   ];
   for (const view of views) {
@@ -128,7 +129,6 @@ test('the penguin takes the pose of each state from its sheet', () => {
   assert.equal(penguinPose({ ...base, scene: 'quiet', seconds: 30 }), 'fishing');
   assert.equal(penguinPose({ ...base, scene: 'quiet', seconds: 300 }), 'asleep');
   assert.equal(penguinPose({ ...base, finished: true }), 'happy');
-  assert.equal(penguinPose({ ...base, visitor: 'fish', visit: 6 }), 'right');
   assert.ok(['left', 'right'].includes(penguinPose({ ...base, asking: true })));
   const idle = new Set(Array.from({ length: 30 }, (_, i) => penguinPose({ ...base, clock: 6.5 + i * 6 })));
   assert.ok(idle.size >= 3, 'idle, it looks around');
@@ -161,14 +161,27 @@ test('the third sheet\'s hobbies keep the penguin at its size, each with its own
   assert.notEqual(band(0.5), band(2));
 });
 
-test('left alone, the penguin keeps busy, never twice the same thing in a row', () => {
+test('left alone, it tells its episodes, never the same twice in a row; too narrow, it keeps busy', () => {
   const mood = new AmbientMood(0, 11);
-  const done = [];
-  for (let now = 0; now < 240_000; now += 250) {
-    const name = mood.update(now, calm).doing?.name;
-    if (name && name !== done.at(-1)) done.push(name);
+  const told = [], done = [];
+  for (let now = 0; now < 1_800_000; now += 250) {
+    // Someone types now and then: the penguin never drifts into its long pause.
+    const view = mood.update(now, now % 240_000 === 0 ? { busy: false, typed: true } : calm);
+    if (view.story && view.story.id !== told.at(-1)) told.push(view.story.id);
+    if (view.doing && view.doing.name !== done.at(-1)) done.push(view.doing.name);
   }
-  assert.ok(new Set(done).size >= 4, done.join(' '));
+  assert.ok(new Set(told).size >= 12, told.join(' '));
+  told.slice(1).forEach((id, i) => assert.notEqual(id, told[i], 'never the same episode twice in a row'));
+  assert.ok(done.every((name) => ['look', 'wave', 'stroll'].includes(name)), `between episodes, only small things: ${done.join(' ')}`);
+  const narrow = new AmbientMood(0, 11);
+  narrow.resize(48);
+  const hobbies = [];
+  for (let now = 0; now < 240_000; now += 250) {
+    const view = narrow.update(now, calm);
+    assert.equal(view.story, undefined, 'too few episodes fit: none is told');
+    if (view.doing && view.doing.name !== hobbies.at(-1)) hobbies.push(view.doing.name);
+  }
+  assert.ok(new Set(hobbies).size >= 4, hobbies.join(' '));
   const base = { scene: 'idle', seconds: 20, clock: 20, work: 0, drawn: 1, visit: 0 };
   const frames = (name, length) => Array.from({ length: 24 }, (_, i) => penguinFrame({ ...base, doing: { name, seconds: (i * length) / 24 } }));
   assert.deepEqual([...new Set(frames('juggle', 3).map((frame) => frame.pose))].sort(), ['juggling', 'juggling2']);
@@ -198,24 +211,80 @@ test('now and then it jumps into the sea in its swim ring, floats, and swims bac
 
   // The AI starts working: it swims home first instead of vanishing.
   let mood, now, view;
-  for (let seed = 1; seed < 20 && view?.doing?.name !== 'swim'; seed++) {
+  for (let seed = 1; seed < 20 && view?.story?.id !== 'baignade'; seed++) {
     mood = new AmbientMood(0, seed);
-    for (now = 0; now < 290_000; now += 250) if ((view = mood.update(now, calm)).doing?.name === 'swim') break;
+    for (now = 0; now < 290_000; now += 250) if ((view = mood.update(now, calm)).story?.id === 'baignade') break;
   }
-  assert.equal(view.doing?.name, 'swim', 'it goes swimming by itself');
+  assert.equal(view.story?.id, 'baignade', 'it goes swimming by itself, in its episode');
   now += 6000;
+  mood.update(now, calm);
   mood.poke('sea', now);
-  assert.equal(mood.update(now, calm).doing.petted, 0, 'a click out at sea pets it');
+  view = mood.update(now, calm);
+  assert.deepEqual([view.doing?.name, view.doing?.petted], ['swim', 0], 'a click out at sea pets it, and it swims on');
+  assert.ok(Math.abs(penguinFrame(view).dx) >= 30, 'still out at sea, no jump home');
   for (let t = now; t < now + 2000; t += 250) view = mood.update(t, busy);
   assert.equal(view.doing?.name, 'swim', 'still on its way home');
   assert.ok(view.doing.seconds >= 13, 'heading home straight away');
   // Too narrow for the open sea: no swim.
   const narrow = new AmbientMood(0, 3);
   narrow.resize(50);
-  for (let t = 0; t < 600_000; t += 250) assert.notEqual(narrow.update(t, calm).doing?.name, 'swim');
+  for (let t = 0; t < 600_000; t += 250) { const v = narrow.update(t, calm); assert.notEqual(v.doing?.name, 'swim'); assert.notEqual(v.story?.id, 'baignade'); }
   // A click finds it where it floats.
   assert.equal(bandHit(90, 40, 6, 32).target, 'penguin');
   assert.equal(bandHit(90, 40, 6).target, 'sky');
+});
+
+test('the AI comes first: an episode waits for it, then resumes at the shot it left', () => {
+  const mood = new AmbientMood(0, 5);
+  let now = 0, view;
+  for (; now < 120_000; now += 250) if ((view = mood.update(now, calm)).story) break;
+  assert.ok(view.story, 'calm, it starts an episode');
+  const story = stories.find(({ id }) => id === view.story.id);
+  // Into its third shot…
+  const third = story.beats[0].for + story.beats[1].for;
+  for (const end = now + (third + 0.5) * 1000; now < end; now += 250) view = mood.update(now, calm);
+  assert.equal(storyBeat(story, view.story.seconds).index, 2);
+  // …the AI starts working: the episode stops at once.
+  view = mood.update(now += 250, busy);
+  assert.equal(view.story, undefined, 'paused the moment the AI is busy');
+  for (const end = now + 6000; now < end; now += 250) assert.equal(mood.update(now, busy).story, undefined);
+  // Short work, no reward: calm again, the episode picks up at the start of that shot.
+  for (const end = now + 15_000; now < end && !view.story; now += 250) view = mood.update(now, calm);
+  assert.equal(view.story?.id, story.id);
+  assert.ok(Math.abs(view.story.seconds - third) < 0.3, `resumed at ${view.story.seconds}s, its shot started at ${third}s`);
+  // Away for long, it starts over.
+  for (const end = now + 1000; now < end; now += 250) mood.update(now, calm);
+  for (const end = now + 100_000; now < end; now += 250) mood.update(now, now % 60_000 === 0 ? { busy: true, asking: true } : { busy: false, asking: true });
+  for (const end = now + 30_000; now < end && !(view = mood.update(now, calm)).story; now += 250);
+  assert.ok(!view.story || view.story.id !== story.id || view.story.seconds < 1, 'after a long while, from the start');
+});
+
+test('every episode plays whole at every width it fits: the narrator never cut, the AI never touched', () => {
+  const base = { scene: 'idle', seconds: 100, work: 0, drawn: 1 };
+  for (const story of stories) {
+    let shown = 0;
+    for (const columns of [60, 80, 100, 132, 200]) {
+      const mood = new AmbientMood(0, 1);
+      mood.resize(columns);
+      // Does it fit? Ask the mood through a band it would tell it in.
+      const fits = columns >= 100 || !story.snowman;
+      if (!fits) continue;
+      for (let t = 0; t < storyLength(story); t += 0.25) {
+        const view = { ...base, clock: 300 + t, story: { id: story.id, seconds: t } };
+        const lines = ambientBand(view, columns);
+        assert.equal(lines.length, BAND_ROWS, `${story.id} ${columns}`);
+        for (const line of lines) assert.equal([...plain(line)].length, columns, `${story.id} at ${t}s, ${columns} columns`);
+        const shot = storyBeat(story, t);
+        // Once typed, the narrator's whole line shows, title first.
+        if (shot.s > ([...shot.beat.say].length + 3) / 40 + 0.05 && columns >= 80) {
+          const caption = plain(lines[1]);
+          if (caption.includes(story.title.toUpperCase())) { assert.ok(caption.includes(shot.beat.say), `${story.id}: « ${shot.beat.say} » at ${columns} columns`); shown++; }
+        }
+        lines.forEach((line, i) => { if (i !== 1) assert.match(plain(line), /^▀*$/, `${story.id}: pixel art only, line ${i}`); });
+      }
+    }
+    assert.ok(shown > 0, `${story.id}: its narrator speaks`);
+  }
 });
 
 test('a click pets the penguin: it answers kindly, happier at each click', () => {

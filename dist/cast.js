@@ -1,0 +1,178 @@
+// The penguin's friends, for its little stories: Gaspard the seagull, Bulle
+// the fish, the shooting star, and the things they bring. Drawn here at the
+// band's pixel scale, big enough to be recognized at a glance; the penguin
+// itself always comes from its sheets.
+/** The cast's colors, bright enough to read on the polar night. */
+export const castPalette = {
+    W: 'ffffff', w: 'd6e2ee', g: '9aa8ba', G: '5c6a80', K: '0a0d16',
+    Y: 'ffd23f', y: 'e09a1a', O: 'ff8a2a', o: 'c85a14', R: 'ee4250', r: 'a02536', P: 'ffa6c4',
+    B: '58b4ff', b: '2a78d0', C: 'bff0ff', T: 'b07040', t: '6a3e1e', V: '74d27a', v: '3a9446',
+    S: 'fff3b0',
+};
+/** Gaspard the seagull, facing left: wings up, wings down, and standing on the ice. */
+export const gull = {
+    up: [
+        'K.............K',
+        'gK...........Kg',
+        '.gW.........Wg.',
+        '..gWw.....wWg..',
+        '...wWWw.wWWw...',
+        '..wKWWWWWWWgg..',
+        '.YYWWWWWWWw....',
+    ],
+    /** Wings spread flat: a glide. */
+    down: [
+        '...............',
+        '...............',
+        '...............',
+        '...wKW.........',
+        'KgYYWWWWWWWWggK',
+        '.gwwWWWWWWWwwg.',
+        '...............',
+    ],
+    stand: [
+        '..wWW....',
+        '.wKWWw...',
+        'YYWWWW...',
+        '..WWWWgg.',
+        '..WWWgggK',
+        '..WWWWggK',
+        '...wWWw..',
+        '...O..O..',
+        '..OO.OO..',
+    ],
+    /** Head down: a bow, or pecking at a meal. */
+    bow: [
+        '.........',
+        '.........',
+        '...WWgg..',
+        '.wWWWgggK',
+        'wKWWWWggK',
+        'YYwWWWw..',
+        '...wWWw..',
+        '...O..O..',
+        '..OO.OO..',
+    ],
+};
+/** Bulle the fish, orange with a white band, facing left; a flick of the tail. */
+export const fish = {
+    swim: [
+        '...OOO.....',
+        '.OOWOOOO.oo',
+        'OKOWOOOOOoO',
+        'OOOWOOOOOoO',
+        '.OOWOOOO.oo',
+        '...OOO.....',
+    ],
+    flick: [
+        '...OOO.....',
+        '.OOWOOOO...',
+        'OKOWOOOOOoo',
+        'OOOWOOOOOoo',
+        '.OOWOOOO...',
+        '...OOO.....',
+    ],
+    /** Smiling for the camera. */
+    smile: [
+        '...OOO.....',
+        '.OOWOOOO.oo',
+        'OKOWOOOOOoO',
+        'OOOWOOOOOoO',
+        'KOOWOOOO.oo',
+        '.K.OOO.....',
+    ],
+};
+/** The shooting star, and the sparkle it leaves where it lands. */
+export const star = {
+    head: ['..Y..', '.YWY.', 'YWWWY', '.YWY.', '..Y..'],
+    sparkle: [['..S..', '..W..', 'SWWWS', '..W..', '..S..'], ['S...S', '.W.W.', '..W..', '.W.W.', 'S...S']],
+};
+/** The trail behind the star, brightest first. */
+export const trailColors = ['fff3b0', 'ffd23f', 'e0a8ff', '8a7ad8', '4a5aa8'];
+/** Gaspard's head alone, peeking out of somewhere. */
+export const gullHead = ['.wWW', 'wKWW', 'YYWW'];
+/** A sleeper's « z ». */
+export const zed = ['www', '..w', '.w.', 'www'];
+/** Gaspard's chick: a grey ball of fluff, its beak wide open. */
+export const chick = ['..gg..', '.gKgg.', 'YYgggg', '.ggggg', '..O.O.'];
+/** The shell Bulle brings back, pink and white. */
+export const shell = ['..PW..', '.PWPW.', 'PWPWPW', '.rrrr.'];
+/** Everything in one dark color: a shadow, a silhouette at night. */
+export const shadow = Object.fromEntries('WwgGKYyOoRrPBbCTtVvS'.split('').map((c) => [c, '1c2c50']));
+export const gift = ['.Y...Y.', '..YYY..', 'RRRYRRR', 'RRRYRRR', 'rrrYrrr', 'rrrYrrr'];
+export const smallFish = ['.OO.o', 'OKOOo', '.OO.o'];
+export const heart = ['RR.RR', 'RRRRR', '.RRR.', '..R..'];
+export const note = ['.BB', '.B.', '.B.', 'BB.', 'BB.'];
+export const note2 = ['CCC', '..C', '..C', '.CC', '.CC'];
+/** An igloo, built block by block from the bottom row up. */
+export const igloo = [
+    '....wwwwww....',
+    '..wWWwWWwWWw..',
+    '.wWWwWWWWwWWw.',
+    'wWwWWWWwWWWwWw',
+    'wWWWWwYYwWWWWw',
+    'wWwWWYSSYwWwWw',
+    'wwwwwYSSYwwwww',
+];
+/** The flower that grows on the ice: a seed, a sprout, a bud, in bloom. */
+export const flower = [
+    ['.....', '.....', '.....', '.....', '.....', '..t..'],
+    ['.....', '.....', '.....', '..V..', '.VV..', '..v..'],
+    ['.....', '..P..', '..V..', '.VV..', '..VV.', '..v..'],
+    ['.P.P.', 'PPYPP', '.PPP.', '..V..', '.VV..', '..VV.', '..v..'],
+];
+/** A photo, with Bulle smiling in it. */
+export const photo = [
+    'WWWWWWWWWWWWW',
+    'WBBBBBBBBBBBW',
+    'WBB.OOO.BBBBW',
+    'WBOOWOOOOoBBW',
+    'WBKOWOOOOoBBW',
+    'WBBKOOO.BBBBW',
+    'WbbbbbbbbbbbW',
+    'WWWWWWWWWWWWW',
+    'WWWWWWWWWWWWW',
+];
+/** A puff of smoke, then its wisps. */
+export const smoke = [
+    ['..gww..', '.gwwwwg', 'gwwWwwg', 'gwwwwwg', '.gwwwg.', '..ggg..'],
+    ['.g...g.', 'g.w.w..', '..g.g.g', '.w...w.', 'g..g...', '.......'],
+];
+/** An explosion's flash, white hot at its heart. */
+export const boom = [
+    '....Y.Y....',
+    '.Y..YOY..Y.',
+    '..YOOWOOY..',
+    '.YOWWWWWOY.',
+    'YOWWWWWWWOY',
+    '.YOWWWWWOY.',
+    '..YOOWOOY..',
+    '.Y..YOY..Y.',
+    '....Y.Y....',
+];
+/** Splashes of paint, when a wing knocks the palette. */
+export const paint = ['R', 'Y', 'B', 'V', 'P'];
+/** The sprite facing the other way. */
+export function mirror(rows) {
+    return rows.map((row) => [...row].reverse().join(''));
+}
+/** Draws a sprite into the canvas; '.' is transparent. */
+export function put(canvas, rows, x, y, palette = castPalette) {
+    rows.forEach((row, dy) => [...row].forEach((c, dx) => {
+        if (c !== '.' && canvas[y + dy]?.[x + dx] !== undefined)
+            canvas[y + dy][x + dx] = palette[c];
+    }));
+}
+/** One pixel, if it lies on the canvas. */
+export function dot(canvas, x, y, color) {
+    if (canvas[y]?.[x] !== undefined)
+        canvas[y][x] = color;
+}
+/** The shooting star at (`x`, `y`), its trail behind it along (`dx`, `dy`) per pixel. */
+export function shootingStar(canvas, x, y, dx, dy, length = 10) {
+    for (let i = length; i >= 1; i--) {
+        const color = trailColors[Math.min(trailColors.length - 1, Math.floor((i - 1) / 2))];
+        dot(canvas, Math.round(x + 2 - dx * i), Math.round(y + 2 - dy * i), color);
+    }
+    put(canvas, star.head, Math.round(x), Math.round(y));
+}

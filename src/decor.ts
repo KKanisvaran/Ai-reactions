@@ -1,6 +1,7 @@
 // The penguin's polar night, at its pixel scale and in the colors of its sheet:
 // sky, stars, moon, mountains, sea, the ice floe and its snowman, a light
-// snowfall and a few visitors. Pure: everything is drawn from the clock.
+// snowfall. Its visitors are the penguin's friends, in its stories. Pure:
+// everything is drawn from the clock.
 
 /** Pixel rows: the penguin's 20, its feet on the ice floe. */
 export const DECOR_HEIGHT = 20;
@@ -14,7 +15,7 @@ const ICE = 'ffffff', ICE_SHADE = 'edffff', ICE_EDGE = '81c7f9', CRACK = '1c508c
 /** Sea level: the far shore's last row. */
 export const HORIZON = 15;
 /** The floe's surface: the penguin's feet stand on it. */
-const FLOE = 18;
+export const FLOE = 18;
 
 const colors: Record<string, string> = {
   W: 'fefffe', K: '06080f', O: 'f99562', R: '4c3c3b', L: 'c3d1de', M: '9bd0ee', m: '8db7de',
@@ -34,10 +35,7 @@ const SNOWMAN = [
 ];
 export const SNOWMAN_WIDTH = SNOWMAN[0]!.length;
 const MOON = ['.MMM', 'MMm.', 'Mm..', 'MMm.', '.MMM'];
-const GULL = [['G.....G', '.G...G.', '..GgG..'], ['.......', 'GGG.GGG', '..GgG..']];
-const FISH = ['.FF.B', 'FFFFF', '.FF.B'];
 
-export type DecorVisitor = 'bird' | 'fish' | 'star';
 export interface DecorScene {
   /** Seconds since the band started. */
   clock: number;
@@ -45,12 +43,9 @@ export interface DecorScene {
   floe: number;
   /** Left edge of the snowman, or undefined without one. */
   snowman?: number | undefined;
-  visitor?: DecorVisitor | undefined;
-  /** 0 → 1 as the visitor crosses the band. */
-  visit?: number;
 }
 
-/** Behind text: the sky or sea of pixel row `y`, without its stars, flakes or visitors. */
+/** Behind text: the sky or sea of pixel row `y`, without its stars or flakes. */
 export function backdrop(y: number): string {
   return y < SKY.length ? SKY[y]! : SEA;
 }
@@ -144,19 +139,5 @@ export function decorPixels(width: number, scene: DecorScene): string[][] {
     set(x, y, FLAKE);
   }
 
-  // Visitors cross from the right edge towards the penguin.
-  const progress = scene.visit ?? 0;
-  if (scene.visitor === 'star') {
-    const x = Math.round(width - progress * (width + 8)), y = 1 + Math.floor(progress * 4);
-    ['ffffff', 'c8d6e4', '7aa6c8', '3a6eaf'].forEach((color, i) => set(x + i, y + (i > 1 ? 1 : 0), color));
-  } else if (scene.visitor === 'bird') {
-    const x = Math.round(width - 8 - progress * Math.max(0, width - 8 - scene.floe)), y = 4 + Math.round(Math.sin(t * 2));
-    sprite(GULL[Math.floor(t * 4) % 2]!, x, y);
-  } else if (scene.visitor === 'fish') {
-    // Jumps out of the water, a little closer each time.
-    const jump = (t % 2.2) / 2.2, x = Math.round(width - 10 - progress * Math.max(0, width - 20 - scene.floe));
-    if (jump < 0.55) sprite(FISH, x - Math.round(jump * 8), HORIZON + 2 - Math.round(Math.sin(Math.PI * jump / 0.55) * 7));
-    else if (jump < 0.7) { set(x - 5, HORIZON + 1, 'ffffff'); set(x - 3, HORIZON + 1, 'ffffff'); set(x - 4, HORIZON, 'c8d6e4'); }
-  }
   return canvas;
 }

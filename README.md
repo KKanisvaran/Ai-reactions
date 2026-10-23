@@ -8,23 +8,25 @@ divertir.
 Lance Codex, Claude Code ou Gemini CLI avec `ai-reactions` : le pingouin
 s’installe sur sa banquise, en bas du terminal, sous un ciel étoilé. Il vit au
 rythme de l’IA : il bosse avec elle, prend un café sur les longues tâches, fête
-la fin, se cache les yeux quand tu l’interromps. Entre deux tâches, il vit sa
-vie : il joue de la guitare, lit, peint, part nager avec sa bouée… et il te
-répond quand tu cliques dessus. Rien à configurer, rien à taper : il comprend
-tout seul ce qui se passe, et ne vient jamais interrompre ni recouvrir l’IA.
+la fin, se cache les yeux quand tu l’interromps. Entre deux tâches, il te
+raconte ses histoires, comme un petit dessin animé : la mouette qui lui vole son
+dîner, le poisson farceur pris à l’hameçon, l’étoile filante tombée sur la
+glace… Et il te répond quand tu cliques dessus. Rien à configurer, rien à
+taper : il comprend tout seul ce qui se passe, et ne vient jamais interrompre
+ni recouvrir l’IA.
 
 > **Créé par pur plaisir.** Ce projet est dédié à celles et ceux qui le
 > téléchargent. Merci du fond du cœur : vous me donnez la force de continuer.
 > J’espère sincèrement qu’il vous plaira.
 
-![Le bandeau sous l’IA : le pingouin à la guitare, au travail, fêtant une récompense, puis au large dans sa bouée](docs/penguin-band.png)
+![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Gaspard nourrissant son bébé, l’étoile rendue au ciel par un ballon, la fête de Flocon](docs/penguin-band.png)
 
-*Le bandeau tel que le dessine le programme, à quatre moments : une occupation
-(la guitare), l’IA au travail, une réaction (récompense) et une baignade.*
+*Le bandeau tel que le dessine le programme, dans quatre de ses histoires :
+« La pêche », « Le voleur », « L’étoile » et « Flocon ».*
 
 - **Un compagnon vivant** : 44 poses reprises pixel pour pixel de trois planches
-  de dessin, des occupations qu’il choisit seul, et des réponses à tes clics,
-  toujours gentilles.
+  de dessin, 15 petites histoires racontées par un narrateur, et des réponses à
+  tes clics, toujours gentilles.
 - **Il comprend tout seul** : ses réactions viennent de ce qu’affiche l’IA,
   sans mot-clé, sans prompt et sans configuration.
 - **En bas, jamais par-dessus** : le bandeau vit sous l’IA, qui reste visible et
@@ -86,16 +88,46 @@ est silencieux : le pingouin ne fait jamais de bruit.
 
 ## Le pingouin compagnon
 
-**Quand tout est calme**, il s’occupe tout seul, jamais deux fois la même chose
-de suite. Il regarde autour de lui, salue, chante, danse, jongle, grignote,
-grelotte, se promène sur la banquise ou saute à l’eau avec sa bouée rouge et
-blanche pour se la couler douce au large. Il a aussi ses passe-temps : lire,
-festoyer, bricoler, bâtir un igloo, peindre, faire une
-expérience, jouer aux jeux vidéo, offrir un cadeau, prendre une photo, observer
-aux jumelles, jouer de la guitare (les notes s’envolent), avoir un coup de
-cœur, avoir une idée (l’ampoule s’allume), faire le roi, jardiner ou promener
-son ballon. Une mouette, un poisson qui saute ou une étoile filante passe le
-voir de temps en temps.
+**Quand tout est calme, il raconte des histoires.** Des épisodes de 20 à 45
+secondes, comme un petit dessin animé, avec un narrateur qui écrit chaque plan
+sur la ligne de texte du bandeau, à la façon des cartons d’un film muet. Chaque
+histoire a son enjeu, son rebondissement et sa chute, et on y retrouve sa bande
+d’amis :
+
+- **Gaspard**, la mouette gourmande au grand cœur ;
+- **Bulle**, le poisson orange qui adore faire des farces ;
+- **Flocon**, le bonhomme de neige timide, souvent seul ;
+- et une étoile filante qui a perdu son chemin.
+
+| Épisode | L’histoire |
+| --- | --- |
+| La pêche | Bulle arrose le pêcheur, finit pris à l’hameçon… et revient le remercier avec un coquillage |
+| Le voleur | Gaspard vole son dîner ; aux jumelles, on découvre qu’il nourrit son bébé |
+| L’étoile | Une étoile filante tombe sur la glace ; le pingouin la renvoie au ciel avec son ballon |
+| Flocon | Personne ne vient voir Flocon ; une chanson, et tous les amis arrivent |
+| L’igloo | Il construit une maison… trop petite pour lui, mais parfaite pour Gaspard |
+| Le peintre | Un coup d’aile ruine sa toile, qui devient « Gaspard, période bleue » |
+| La photo | Trop tard, trop tôt… puis pile au bon moment |
+| Le concert | Un concert pour personne, puis pour tout le monde |
+| La fleur | La première fleur de la banquise, et le héros qui la protège |
+| La surprise | Tout le monde a oublié son anniversaire… vraiment ? |
+| La potion | Une expérience qui fait boum… et neiger des paillettes |
+| Le roi | Une couronne trouvée dans la neige, et un premier décret : la fête |
+| Le fantôme | Une histoire qui fait peur, une ombre aux yeux jaunes… |
+| La partie | Une boule de neige volée, puis une partie à trois |
+| La baignade | Un bain de minuit, avec Bulle pour compagnie |
+
+Chaque session les raconte toutes dans un ordre différent avant d’en raconter
+une deuxième fois. Entre deux épisodes, il cligne des yeux, regarde autour de
+lui, salue ou se promène. **L’IA passe toujours en premier** : dès qu’elle se met
+au travail, l’épisode se met en pause, et il reprend au début du plan quand elle
+a fini (après une longue absence, il recommence depuis le début). En pleine
+baignade, il rentre à la nage au lieu de disparaître de l’eau.
+
+Les histoires ont besoin d’un peu de place : 8 épisodes à partir de 60
+colonnes, 14 à 80, et Flocon à partir de 100. Dans un terminal plus étroit, le
+pingouin s’occupe à sa façon : il lit, peint, jongle, chante, joue de la
+guitare…
 
 **Clique dans le bandeau** et il te répond, toujours avec bienveillance :
 
@@ -116,9 +148,10 @@ La molette de la souris fait défiler l’historique de l’IA, comme une page ;
 n’importe quelle touche ramène l’écran en direct. Pour sélectionner du texte,
 maintiens Maj en glissant.
 
-Le lancement commence par l’intro KK LAB : le tigre se dessine, suivi de son
-message. Puis le pingouin se dessine à son tour dans le bandeau, contour d’abord.
-Une touche passe l’intro ; `ai-reactions intro` la rejoue.
+Le lancement commence par l’intro KK LAB : le tigre se dessine, puis son message
+s’écrit phrase après phrase, au rythme de la lecture. Une touche passe l’intro
+(`AI_REACTIONS_INTRO=0` la supprime, `ai-reactions intro` la rejoue). Puis le
+pingouin se dessine à son tour dans le bandeau, contour d’abord.
 
 ## Comment ce projet est né
 
@@ -149,8 +182,9 @@ ont fini par disparaître complètement, avec le serveur MCP qui les servait : i
 n’y a plus rien à configurer.
 
 Puis le pingouin est devenu un **compagnon** : ses poses sont reprises de trois
-planches de dessin, il choisit ses occupations, répond aux clics, part nager,
-et le tout tourne à 60 images par seconde.
+planches de dessin, il répond aux clics, et le tout tourne à 60 images par
+seconde. Enfin, plutôt que d’enchaîner des occupations au hasard, il s’est mis à
+raconter de vraies histoires, avec ses amis.
 
 ## Comment ça marche
 
@@ -169,7 +203,7 @@ et le tout tourne à 60 images par seconde.
   │ …                                        │
   ├──────────────────────────────────────────┤
   │ bandeau : le pingouin dans sa nuit       │  10 lignes
-  │ polaire, ses occupations et réactions    │
+  │ polaire, ses histoires et ses réactions  │
   └──────────────────────────────────────────┘
 ```
 
@@ -187,6 +221,10 @@ et le tout tourne à 60 images par seconde.
   réponses aux clics ; ses 44 poses ; sa nuit polaire (ciel en dégradé, étoiles
   qui scintillent, lune, montagnes, mer qui miroite, banquise, bonhomme de
   neige, petite neige) ; les réactions en pixel art et leurs légendes.
+- **Histoires** (`src/stories.ts`, `src/cast.ts`) : les 15 épisodes, plan par
+  plan (ce que dit le narrateur, ce que fait le pingouin, ce que font les
+  autres), et les amis du pingouin dessinés à l’échelle du bandeau. Une frame
+  d’épisode coûte environ 0,1 ms et envoie en moyenne 0,2 Ko au terminal.
 - **Intro** (`src/intro.ts`, `src/mascot-render.ts`, `src/mascot-image.ts`) : à
   chaque lancement, la mascotte KK LAB se dessine au centre d’après son SVG, avec
   son message en dessous. Dans un terminal compatible Sixel (Windows Terminal
@@ -233,7 +271,7 @@ Pour signaler une faille, voir [SECURITY.md](SECURITY.md).
 ```sh
 git clone https://github.com/KKanisvaran/Ai-reactions.git && cd Ai-reactions
 npm ci
-npm test               # build + 25 tests : bandeau, pingouin, intro, horloge, pseudo-terminal réel
+npm test               # build + 28 tests : bandeau, pingouin, histoires, intro, horloge, pseudo-terminal réel
 npm run ai -- codex    # lanceur depuis les sources (Windows PowerShell : npm.cmd run ai -- codex)
 ```
 
@@ -244,6 +282,11 @@ vérifie sur Windows, Linux et macOS.
 Pour ajouter une réaction : son titre et ses légendes dans `src/reactions.ts`,
 ce qui la déclenche dans `AmbientMood` (`src/ambient.ts`), la pose du pingouin
 dans `penguinFrame` (même fichier) et sa scène en pixel art dans `src/scenes.ts`.
+
+Pour ajouter une histoire : un épisode de plus dans `stories` (`src/stories.ts`),
+plan par plan. Chaque plan a sa durée, sa phrase (le test vérifie qu’elle tient
+en entier dans un terminal de 80 colonnes), la pose du pingouin et ce que font
+les autres ; les personnages et leurs objets sont dans `src/cast.ts`.
 
 ## Licence
 
