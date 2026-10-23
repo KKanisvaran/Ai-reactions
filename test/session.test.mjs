@@ -5,15 +5,14 @@ import { once } from 'node:events';
 import xterm from '@xterm/headless';
 import { SessionTerminal } from '../dist/session-terminal.js';
 
-const options = { mode: 'terminal', sound: false, volume: 0.3 };
 const write = (terminal, data) => new Promise((resolve) => terminal.write(data, resolve));
 const text = (terminal) => Array.from({ length: terminal.rows }, (_, y) =>
   terminal.buffer.active.getLine(terminal.buffer.active.viewportY + y)?.translateToString(true) ?? '').join('\n');
 
-test('same-terminal animation preserves live AI output, colors, Unicode and alternate screen', { timeout: 15000 }, async () => {
+test('the session repaints the AI\'s screen faithfully: colors, Unicode and alternate screen', { timeout: 15000 }, async () => {
   let output = '';
   const stream = { isTTY: true, columns: 80, rows: 24, write: (data) => { output += data; } };
-  const session = new SessionTerminal(stream, options);
+  const session = new SessionTerminal(stream);
   const physical = new xterm.Terminal({ cols: 80, rows: 24, allowProposedApi: true });
   try {
     await session.write('Normal screen\r\n\x1b[?1049h\x1b[H\x1b[31mAssistant prêt 界\x1b[0m');
@@ -21,16 +20,6 @@ test('same-terminal animation preserves live AI output, colors, Unicode and alte
     await write(physical, output);
     assert.match(text(physical), /Assistant prêt 界/);
     assert.equal(physical.buffer.active.getLine(0).getCell(0).getFgColor(), 1);
-    output = '';
-    const effect = session.react({ reaction: 'boop', intensity: 1 });
-    await new Promise((resolve) => setTimeout(resolve, 100));
-    await session.write('\r\nTravail terminé pendant animation');
-    assert.match(output, /BOOP \/ SUR LE NEZ/);
-    assert.doesNotMatch(output, /Travail terminé/);
-    await effect;
-    await write(physical, output);
-    assert.match(text(physical), /Travail terminé pendant animation/);
-    assert.doesNotMatch(text(physical), /BOOP \/ SUR LE NEZ/);
     output = '';
     await session.write('\x1b[?1049l');
     session.render();
@@ -41,7 +30,7 @@ test('same-terminal animation preserves live AI output, colors, Unicode and alte
 
 test('session terminal responds to terminal queries and adapts to resizing', async () => {
   const stream = { isTTY: true, columns: 80, rows: 24, write() {} };
-  const session = new SessionTerminal(stream, options);
+  const session = new SessionTerminal(stream);
   let replies = '';
   session.terminal.onData((data) => { replies += data; });
   try {

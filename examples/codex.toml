@@ -1,4 +1,0 @@
-# Replace the absolute path with your checkout path. Merge into ~/.codex/config.toml.
-[mcp_servers.ai-reactions]
-command = "node"
-args = ["C:/chemin/ai-reactions/dist/index.js"]

@@ -1,5 +1,5 @@
 // Ambient band: the penguin lives below the AI and reacts on its own to what
-// the AI is doing. MCP reactions play here too, never over the AI.
+// the AI is doing, never over the AI.
 // Everything here is pure and driven by the clock the caller passes in; the
 // AI's screen is only read in memory, never logged.
 import { SWIM_ROOM, activityFrame, activityLength, answer, drawActivity, drawBehind, homeward, idleActivities, underWater } from "./companion.js";
@@ -139,24 +139,14 @@ export class AmbientMood {
         }
         this.begin(answer(target, target === 'penguin' ? this.clicks.length : 1), now, true, at);
     }
-    /** An MCP reaction: it replaces whatever plays and returns its duration in ms. */
-    play(name, intensity, now) {
-        const duration = reactionDuration(intensity);
-        this.reaction = { name, intensity, start: now, end: now + duration, manual: true };
-        if (!this.activity?.user)
-            this.hurryHome(now);
-        return duration;
-    }
-    /** The penguin's own reactions never cut an MCP one, nor repeat too often. */
+    /** The penguin's reactions never repeat too often. */
     auto(name, intensity, now) {
         if (!this.activity?.user)
             this.hurryHome(now);
-        if (this.reaction?.manual && now < this.reaction.end)
-            return;
         if (now - (this.lastAuto.get(name) ?? -Infinity) < COOLDOWN)
             return;
         this.lastAuto.set(name, now);
-        this.reaction = { name, intensity, start: now, end: now + reactionDuration(intensity), manual: false };
+        this.reaction = { name, intensity, start: now, end: now + reactionDuration(intensity) };
     }
     finish(now) {
         const seconds = this.work / 1000;
@@ -345,7 +335,6 @@ export function penguinFrame(view) {
         case 'rip': return still(s < 1.5 ? 'closed' : 'crying');
         case 'too_slow': return still(s < 1.5 ? 'closed' : 'sweating');
         case 'coffee': return still('pleased');
-        case 'confused': return still('thinking');
         case 'facepalm': return still('facepalm');
         case 'chill':
         case 'ez': return still('shades');

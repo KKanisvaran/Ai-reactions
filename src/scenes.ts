@@ -29,7 +29,6 @@ const PALM = [
   '.....B.....', '.....cB....', '....cB.....', '..CCCCCCC..',
 ];
 const NOTE = ['.SS.', '.S.S', '.S..', 'SS..', 'SS..'];
-const QUESTION = ['.YYY.', 'Y...Y', '....Y', '..YY.', '..Y..', '.....', '..Y..'];
 const HORN = ['..........yYY', 'YYYYYYYYYyYYY', 'Y........yYYY', 'YYYYYYYYYyYYY', '..........yYY'];
 const ROCKET = [
   ['...rr........', '...WWWWWWWw..', 'YOOWWsSWWWWRR', '...WWWWWWWw..', '...rr........'],
@@ -96,9 +95,6 @@ export function drawScene(name: ReactionName, s: number, stage: Stage): void {
     case 'chill':
       ground(stage, PALM, x + 1);
       for (let i = 0; i < 3; i++) sprite(stage, NOTE, x + 14 + i * 6, top + 1 + (f + i) % 2 * 2);
-      break;
-    case 'confused':
-      for (let i = 0; i < 4; i++) sprite(stage, QUESTION, x + 1 + i * 7, top + (cycle(s, 3, 3, i) + i % 2));
       break;
     case 'facepalm':
       // The sad trombone, its notes falling.

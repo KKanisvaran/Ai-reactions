@@ -1,14 +1,8 @@
 import pty from 'node-pty';
 import { join } from 'node:path';
-import { setTimeout as delay } from 'node:timers/promises';
-import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import { ambientEnabled } from '../dist/ambient.js';
 import { playIntro } from '../dist/intro.js';
-import { JournalReader } from '../dist/journal-reader.js';
-import { reactionLogPath } from '../dist/local-output.js';
 import { InputReader, leftClick, MOUSE_OFF, MOUSE_ON } from '../dist/mouse.js';
-import { effectOptions } from '../dist/terminal-output.js';
 import { SessionTerminal } from '../dist/session-terminal.js';
 import { ensureSpawnHelper } from './pty-helper.mjs';
 
@@ -17,21 +11,13 @@ if (args[0] === '--') args.shift();
 if (args[0] === '--help') {
   console.log('Usage : ai-reactions codex [arguments] (ou claude, gemini)\n'
     + 'Un pingouin vit dans un bandeau sous l’IA et réagit tout seul à ce qu’elle fait,\n'
-    + 'sans mot-clé et sans jamais la recouvrir (AI_REACTIONS_AMBIENT=0 pour le retirer).\n'
-    + 'Bonus, dans le chat : boop = boop sur le nez ; café = pause café ; bien joué = encouragement ; gg = récompense ;\n'
-    + 'trop long = escargot ; chill = palmier lo-fi ; wtf = perplexe ; bruh = facepalm ;\n'
-    + 'let\'s go = hype ; rip = pierre tombale ; susp = suspense ; ez = trop facile.');
+    + 'sans jamais la recouvrir (AI_REACTIONS_AMBIENT=0 pour le retirer). Clique dessus : il te répond.');
 } else if (!process.stdin.isTTY || !process.stdout.isTTY) {
   console.error('Lancez ai-reactions codex directement dans un terminal interactif (sans capture ni pipeline).');
   process.exitCode = 1;
 } else {
-  // The KK LAB mascot draws itself at every launch; the first one also presents the chat keywords.
-  const seen = join(dirname(reactionLogPath()), 'intro-seen');
-  if (process.env.AI_REACTIONS_INTRO !== '0') {
-    const first = !existsSync(seen);
-    await playIntro(process.stdout, process.stdin, { keywords: first });
-    if (first) try { mkdirSync(dirname(seen), { recursive: true }); writeFileSync(seen, ''); } catch { /* Shown again next time. */ }
-  }
+  // The KK LAB mascot draws itself at every launch.
+  if (process.env.AI_REACTIONS_INTRO !== '0') await playIntro(process.stdout, process.stdin);
   await run(args.length ? args : ['codex']);
   // ConPTY can retain worker handles after onExit. The child has already
   // exited and the screen is restored; flush output before closing our host.
@@ -43,9 +29,7 @@ async function run(command) {
   let input, resize;
   const wasRaw = process.stdin.isRaw;
   try {
-    const reader = new JournalReader(reactionLogPath());
-    await reader.start();
-    screen = new SessionTerminal(process.stdout, effectOptions(), { ambient: ambientEnabled() });
+    screen = new SessionTerminal(process.stdout, { ambient: ambientEnabled() });
     let executable = command[0], arguments_ = command.slice(1);
     if (process.platform === 'win32') {
       if (['codex', 'gemini', 'npm', 'npx'].includes(executable)) executable += '.cmd';
@@ -97,23 +81,8 @@ async function run(command) {
     process.stdin.resume();
     process.stdin.on('data', input);
     process.stdout.on('resize', resize);
-    const watching = (async () => {
-      while (!stop) {
-        try {
-          for (const event of await reader.next()) {
-            if (stop) break;
-            await screen.react(event);
-          }
-        } catch (error) {
-          // Surface playback errors inside the same screen, then keep the AI alive.
-          await screen.write(`\r\n[ai-reactions] ${error.message}\r\n`);
-        }
-        if (!stop) await delay(100);
-      }
-    })();
     const { exitCode } = await exited;
     stop = true;
-    await watching;
     process.exitCode = exitCode;
   } catch (error) {
     stop = true;

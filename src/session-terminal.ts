@@ -2,10 +2,14 @@ import xterm from '@xterm/headless';
 import { AmbientMood, bandCells, bandHit, bandRows, paintCells, penguinFrame, readSignals } from './ambient.ts';
 import type { BandCell } from './ambient.ts';
 import { FRAME_MS, startFrames } from './frame-clock.ts';
-import { playTerminalEffect, startSound } from './terminal-output.ts';
-import type { EffectOptions } from './terminal-output.ts';
-import type { ReactionEvent } from './reactions.ts';
-import type { TerminalStream } from './terminal-animation.ts';
+
+/** The launcher's own terminal: its size, and whether it is still busy with what was sent. */
+export interface TerminalStream {
+  columns?: number;
+  rows?: number;
+  writableNeedDrain?: boolean;
+  write(text: string): unknown;
+}
 
 const BUSY_ROWS = 15;
 /** Unchanged cells between two changes are rewritten when cheaper than moving the cursor. */
@@ -34,15 +38,12 @@ function cellStyle(cell: xterm.IBufferCell): string {
 }
 
 // The outer terminal belongs to this launcher. The AI has a separate PTY and
-// continues updating this bounded virtual screen while an animation is shown.
+// updates this bounded virtual screen; the penguin lives in the rows below it.
 export class SessionTerminal {
   readonly terminal: xterm.Terminal;
-  private animating = false;
   private closed = false;
   private timer: ReturnType<typeof setTimeout> | undefined;
-  private pending: Promise<void> = Promise.resolve();
   private readonly output: TerminalStream;
-  private readonly options: EffectOptions;
   private cursorVisible = true;
   // Ambient band below the AI: the penguin, fed by what the AI's screen shows.
   private readonly mood: AmbientMood | undefined;
@@ -63,10 +64,9 @@ export class SessionTerminal {
   private shownRows: string[] = [];
   private readonly now: () => number;
 
-  constructor(output: TerminalStream, options: EffectOptions, { ambient = false, now = () => performance.now() } = {}) {
+  constructor(output: TerminalStream, { ambient = false, now = () => performance.now() } = {}) {
     this.now = now;
     this.output = output;
-    this.options = options;
     const columns = output.columns ?? 80, rows = output.rows ?? 24;
     if (ambient) {
       this.mood = new AmbientMood(this.now());
@@ -105,10 +105,6 @@ export class SessionTerminal {
     this.schedule();
   }
 
-  /**
-   * Scrolls the AI's history, kept by the virtual screen: the physical one is
-   * an alternate screen without scrollback. Negative values go back in time.
-   */
   /** A click on the band, at cell (`column`, `row`) counted from its top left: the penguin answers. */
   click(column: number, row: number): void {
     const hit = bandHit(this.terminal.cols, column, row, this.penguinAway);
@@ -117,6 +113,10 @@ export class SessionTerminal {
     this.renderBand();
   }
 
+  /**
+   * Scrolls the AI's history, kept by the virtual screen: the physical one is
+   * an alternate screen without scrollback. Negative values go back in time.
+   */
   scroll(lines: number): void {
     if (lines) this.terminal.scrollLines(lines);
     else this.terminal.scrollToBottom();
@@ -130,7 +130,7 @@ export class SessionTerminal {
   }
 
   private schedule(): void {
-    if (this.closed || this.animating) return;
+    if (this.closed) return;
     // The AI and the penguin share one frame: one write, one terminal refresh.
     if (this.stopFrames) { this.dirty = true; return; }
     if (this.timer) return;
@@ -145,7 +145,7 @@ export class SessionTerminal {
   }
 
   render(): void {
-    if (this.closed || this.animating) return;
+    if (this.closed) return;
     this.dirty = false;
     const terminal = this.terminal;
     const buffer = terminal.buffer.active;
@@ -181,7 +181,7 @@ export class SessionTerminal {
 
   /** Repaints the band only, between two AI frames. */
   renderBand(): void {
-    if (this.closed || this.animating || !this.band) return;
+    if (this.closed || !this.band) return;
     const band = this.bandFrame();
     if (band) this.output.write(`\x1b[?2026h\x1b[?25l${band}${this.cursorFrame()}`);
   }
@@ -234,51 +234,10 @@ export class SessionTerminal {
     return frame;
   }
 
-  react(event: ReactionEvent): Promise<void> {
-    if (this.mood && this.band) return this.reactInBand(event);
-    const task = this.pending.then(async () => {
-      if (this.closed) return;
-      this.animating = true;
-      if (this.timer) { clearTimeout(this.timer); this.timer = undefined; }
-      this.output.write('\x1b[?2026l\x1b[0m\x1b[?25l\x1b[2J\x1b[H');
-      try {
-        const output = this.output;
-        await playTerminalEffect(event, this.options, {
-          isTTY: true,
-          get columns() { return output.columns ?? 80; },
-          get rows() { return output.rows ?? 24; },
-          write: (text) => output.write(text.replaceAll('\n', '\r\n')),
-        });
-      } finally {
-        // The latest AI output is already in the virtual screen, including
-        // anything emitted during playback. No process is paused or signaled.
-        await this.write('');
-        this.animating = false;
-        this.shownBand = [];
-        this.shownRows = [];
-        this.render();
-      }
-    });
-    this.pending = task.catch(() => {});
-    return task;
-  }
-
-  /** The reaction plays in the band: the AI stays on screen, untouched. */
-  private async reactInBand(event: ReactionEvent): Promise<void> {
-    if (this.closed || this.options.mode === 'text') return;
-    const duration = this.mood!.play(event.reaction, event.intensity, this.now());
-    this.renderBand();
-    if (!this.options.sound) return;
-    const audio = startSound(event, this.options.volume);
-    await audio.ready;
-    await Promise.all([new Promise((resolve) => setTimeout(resolve, duration).unref?.()), audio.finished]);
-  }
-
   async dispose(): Promise<void> {
     this.closed = true;
     if (this.timer) clearTimeout(this.timer);
     this.stopFrames?.();
-    await this.pending;
     this.terminal.dispose();
   }
 }

@@ -23,8 +23,6 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm test
-        env:
-          AI_REACTIONS_SOUND: '0'
       - name: dist/ matches src/
         shell: bash
         run: git diff --exit-code -- dist/ || (echo "Run npm run build and commit dist/." && exit 1)
