@@ -40,7 +40,7 @@
   "homepage": "https://github.com/KKanisvaran/Ai-reactions#readme",
   "dependencies": {
     "@modelcontextprotocol/client": "2.3.1",
-    "@modelcontextprotocol/server": "2.1.0",
+    "@modelcontextprotocol/server": "2.3.1",
     "@xterm/headless": "6.0.0",
     "node-pty": "1.1.0",
     "zod": "^4.6.5"
@@ -57,7 +57,7 @@
     "LICENSE"
   ],
   "devDependencies": {
-    "typescript": "~6.0.3",
-    "@types/node": "^24.13.6"
+    "@types/node": "^24.13.6",
+    "typescript": "~6.0.3"
   }
 }
