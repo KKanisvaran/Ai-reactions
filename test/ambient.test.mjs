@@ -150,7 +150,7 @@ test('every pose stands on the same feet, centered on the same belly', () => {
 
 test('the third sheet\'s hobbies keep the penguin at its size, each with its own pose', () => {
   const base = { scene: 'idle', seconds: 20, clock: 20, work: 0, drawn: 1, visit: 0 };
-  const hobbies = ['read', 'feast', 'tinker', 'build', 'paint', 'ninja', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
+  const hobbies = ['read', 'feast', 'tinker', 'build', 'paint', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
   const poses = hobbies.map((name) => penguinPose({ ...base, doing: { name, seconds: 3 } }));
   assert.equal(new Set(poses).size, hobbies.length);
   const headTop = (rows) => rows.findIndex((row) => /KKKKK/.test(row));

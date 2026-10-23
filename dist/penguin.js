@@ -1,7 +1,7 @@
 // The penguin, the ai-reactions mascot: © KKanisvaran, all rights reserved (excluded from the MIT license, see LICENSE).
 // Generated from the KK LAB penguin sheets, pixel for pixel: 12 poses on a 21 × 20 canvas, feet aligned,
 // then 16 from the second sheet, centered on the same belly; wider poses (raised flippers, a cape) overflow evenly.
-// The third sheet draws a longer penguin (21 rows): its 17 poses that fit lost their most redundant rows down to the
+// The third sheet draws a longer penguin (21 rows): its 16 poses kept lost their most redundant rows down to the
 // same 18 (never the face nor the feet), no pixel resampled or redrawn; what floats above the head became props.
 export const penguinPalette = {
     K: '06080f', N: '1b305c', D: '0e1e3c', B: '3a6eaf', W: 'fcfdfd', L: '7aa6c8', P: 'c8d6e4', G: '969eaa', O: 'fc7c22', R: '784a2a',
@@ -736,28 +736,6 @@ export const penguinPoses = {
         '..KNDELPPPLGEENKNNDDDDDwDNKRRDRK...',
         '...KOOOKKKOOOOK....................',
         '...KKKKK..KKKKK....................',
-    ],
-    ninja: [
-        '.................................',
-        '.................................',
-        '..............KKKKKKK............',
-        '.............KDDDDDDDKD..........',
-        '...........KKDDDDDDDDDDK.........',
-        '......DDDDNKKDKKDDDDKKDD.........',
-        '......DDDDKKKKYYYiiiFYRD.........',
-        '........KKKKDKiKKiiiWKiD.........',
-        '.......NKDKKDKiYYiiiiYYD...KN....',
-        '.....KKDDKKKDDDKKKKKKKDD...KGG...',
-        '......KDKNNKKDDDDDDDDDDK..NKGmGGK',
-        '.......KBnDKKKDDDDDDDDKKKKgGmgGK.',
-        '........BKKDDDKKKKKKKKDDDKKKKGK..',
-        '........KDDDDDDDKDDKKKDDDDDKDNK..',
-        '........KDDDDKKDDKDKKDDDKKK...K..',
-        '........KKDDDDDDDKKKDDKKD........',
-        '..........KKKKKKKKKKKKKK.........',
-        '.........KDDDDKKKKKDDDDDK........',
-        '........KDDKK........KDDK........',
-        '.......KKKKK.........KKKKK.......',
     ],
     experimenting: [
         '.............................',

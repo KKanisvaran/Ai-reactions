@@ -22,7 +22,7 @@ tout seul ce qui se passe, et ne vient jamais interrompre ni recouvrir l’IA.
 *Le bandeau tel que le dessine le programme, à quatre moments : une occupation
 (la guitare), l’IA au travail, une réaction (récompense) et une baignade.*
 
-- **Un compagnon vivant** : 45 poses reprises pixel pour pixel de trois planches
+- **Un compagnon vivant** : 44 poses reprises pixel pour pixel de trois planches
   de dessin, des occupations qu’il choisit seul, et des réponses à tes clics,
   toujours gentilles.
 - **Il comprend tout seul** : ses réactions viennent de ce qu’affiche l’IA,
@@ -90,7 +90,7 @@ est silencieux : le pingouin ne fait jamais de bruit.
 de suite. Il regarde autour de lui, salue, chante, danse, jongle, grignote,
 grelotte, se promène sur la banquise ou saute à l’eau avec sa bouée rouge et
 blanche pour se la couler douce au large. Il a aussi ses passe-temps : lire,
-festoyer, bricoler, bâtir un igloo, peindre, jouer au ninja, faire une
+festoyer, bricoler, bâtir un igloo, peindre, faire une
 expérience, jouer aux jeux vidéo, offrir un cadeau, prendre une photo, observer
 aux jumelles, jouer de la guitare (les notes s’envolent), avoir un coup de
 cœur, avoir une idée (l’ampoule s’allume), faire le roi, jardiner ou promener
@@ -184,7 +184,7 @@ et le tout tourne à 60 images par seconde.
 - **Bandeau** (`src/ambient.ts`, `src/companion.ts`, `src/penguin.ts`,
   `src/decor.ts`, `src/scenes.ts`, `src/reactions.ts`) : l’humeur du pingouin,
   déduite de l’écran virtuel en mémoire uniquement ; ses occupations et ses
-  réponses aux clics ; ses 45 poses ; sa nuit polaire (ciel en dégradé, étoiles
+  réponses aux clics ; ses 44 poses ; sa nuit polaire (ciel en dégradé, étoiles
   qui scintillent, lune, montagnes, mer qui miroite, banquise, bonhomme de
   neige, petite neige) ; les réactions en pixel art et leurs légendes.
 - **Intro** (`src/intro.ts`, `src/mascot-render.ts`, `src/mascot-image.ts`) : à

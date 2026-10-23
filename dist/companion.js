@@ -19,7 +19,7 @@ export const WATERLINE = HORIZON + 3;
 export const activityLength = {
     look: 2.4, wave: 3, sing: 5, dance: 5, juggle: 6, think: 4.5, snack: 4, shiver: 3, stroll: 5.4, swim: SWIM.home,
     pleased: 2.6, hop: 1.6, greet: 3, wish: 2.6, splash: 2.6,
-    read: 5, feast: 4, tinker: 4, build: 4.5, paint: 5, ninja: 3.5, experiment: 4.5, game: 5, gift: 3.5, photo: 3.5, spy: 4.5,
+    read: 5, feast: 4, tinker: 4, build: 4.5, paint: 5, experiment: 4.5, game: 5, gift: 3.5, photo: 3.5, spy: 4.5,
     guitar: 5, love: 4, idea: 4, king: 4, garden: 4.5, balloon: 5,
 };
 /**
@@ -29,7 +29,7 @@ export const activityLength = {
 export const homeward = { stroll: 3.8, swim: SWIM.float };
 /** What it may pick by itself when nothing happens; looking around is the most common. */
 export const idleActivities = ['look', 'look', 'wave', 'sing', 'dance', 'juggle', 'think', 'snack', 'shiver', 'stroll', 'swim',
-    'read', 'feast', 'tinker', 'build', 'paint', 'ninja', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
+    'read', 'feast', 'tinker', 'build', 'paint', 'experiment', 'game', 'gift', 'photo', 'spy', 'guitar', 'love', 'idea', 'king', 'garden', 'balloon'];
 /** Its answers to clicks in a row, happier each time. */
 const petting = ['pleased', 'wave', 'hop', 'dance'];
 export function answer(target, clicks) {
@@ -131,8 +131,6 @@ export function activityFrame({ name, seconds: s }) {
         case 'tinker': return still('tinkering');
         case 'build': return still('building');
         case 'paint': return still('painting');
-        // It lands in its ninja stance.
-        case 'ninja': return { pose: 'ninja', dx: 0, dy: s < 0.6 ? jump(s, 0.6, 2) : 0 };
         case 'experiment': return still('experimenting');
         case 'game': return still('gaming');
         case 'gift': return still('gift');
