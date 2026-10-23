@@ -15,9 +15,9 @@ glace… Et il te répond quand tu cliques dessus. Rien à configurer, rien à
 taper : il comprend tout seul ce qui se passe, et ne vient jamais interrompre
 ni recouvrir l’IA.
 
-> **Créé par pur plaisir.** J’ai créé ce projet en pensant à vous. Merci du
-> fond du cœur : vous me donnez la force de continuer. J’espère sincèrement
-> qu’il vous plaira.
+> **Bienvenue sur la banquise.** Ce petit pingouin est là pour vous tenir
+> compagnie pendant que vous codez. Merci de l’accueillir dans votre terminal,
+> et bonnes aventures !
 
 ![Le bandeau sous l’IA, quatre moments de ses histoires : Bulle pris à l’hameçon, Nounours l’ours qui demande au pingouin d’être son ami, une balade sur le dos de Bernadette la baleine, l’aurore boréale](docs/penguin-band.png)
 

@@ -3,9 +3,9 @@ import { waitFrame } from "./frame-clock.js";
 import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, parseGraphics, queryTerminal } from "./mascot-render.js";
 /** The note, one sentence per line; on a narrow terminal, a sentence wraps between its pieces. */
 const NOTE = [
-    ['J’ai créé ce projet', 'par pur plaisir,', 'en pensant à vous.'],
-    ['Merci du fond du cœur :', 'vous me donnez la force', 'de continuer.'],
-    ['J’espère sincèrement', 'qu’il vous plaira.'],
+    ['Bienvenue sur la banquise.'],
+    ['Ce petit pingouin est là', 'pour vous tenir compagnie', 'pendant que vous codez.'],
+    ['Merci de l’accueillir', 'dans votre terminal,', 'et bonnes aventures !'],
 ];
 const NOTE_TEXT = NOTE.map((pieces) => pieces.join(' ')).join(' ');
 /** The note's lines on a terminal `cols` wide; `last` ends a sentence. */
