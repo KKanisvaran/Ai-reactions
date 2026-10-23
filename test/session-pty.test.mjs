@@ -24,8 +24,8 @@ test('real PTY launcher: the penguin reacts on its own below the AI, input is fo
   assert.equal(exitCode, 0, errors + output.slice(-3000));
   assert.match(output, /SESSION_READY/, 'the child runs interactively');
   // A permission prompt, then an interruption: suspense, then a facepalm.
-  const plain = output.replace(/\[[0-9;?]*[A-Za-z]/g, '');
-  for (const caption of ['Hmm… louche.', 'Bruh.']) assert.ok(output.includes(caption), `band caption ${caption}: ${plain.slice(-1500)}`);
+  const plain = output.replace(/\x1b\[[0-9;?]*[A-Za-z]/g, '').replace(/[▀ ]+/g, ' ');
+  for (const caption of ['Hmm… louche.', 'Bruh.']) assert.ok(output.includes(caption), `band caption ${caption}: ${plain}`);
   assert.match(output, /Interrupted by user/, 'the AI stays on screen');
   assert.match(output, /SESSION_DONE/);
   assert.match(output, /WORK_[4-9]\d/, 'AI output keeps flowing');
