@@ -62,24 +62,25 @@ function noise(seed: number): number {
   return ((h ^ (h >>> 16)) >>> 0) / 0x100000000;
 }
 
-/** The decor, `width` × DECOR_HEIGHT pixels as hex colors. */
-export function decorPixels(width: number, scene: DecorScene): string[][] {
-  const t = scene.clock;
+/**
+ * What never moves for a given layout: sky and sea, moon, mountains, floes and
+ * snowman, with for each pixel the last of them drawn there (0: the backdrop,
+ * 1: what covers the stars, 2: what also covers the sea's shimmer). Kept for
+ * the last layout, so a frame only copies it.
+ */
+let still: { key: string; canvas: string[][]; layer: number[][] } | undefined;
+
+function stillDecor(width: number, scene: DecorScene): { canvas: string[][]; layer: number[][] } {
+  const key = `${width}:${scene.floe}:${scene.snowman}`;
+  if (still?.key === key) return still;
   const height = DECOR_HEIGHT;
-  // Stars twinkle in steps, twice a second; snow and sea glide a pixel at a time.
-  const slow = Math.floor(t * 2) / 2;
   const canvas = Array.from({ length: height }, (_, y) => Array.from({ length: width }, () => backdrop(y)));
-  const set = (x: number, y: number, color: string) => { if (x >= 0 && x < width && y >= 0 && y < height) canvas[y]![x] = color; };
+  const layer = Array.from({ length: height }, () => new Array<number>(width).fill(0));
+  let level = 1;
+  const set = (x: number, y: number, color: string) => { if (x >= 0 && x < width && y >= 0 && y < height) { canvas[y]![x] = color; layer[y]![x] = level; } };
   const sprite = (rows: string[], left: number, top: number) => rows.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') set(left + x, top + y, colors[c]!); }));
 
-  // Stars: most hold still, each twinkles now and then.
-  for (let i = 0; i < width / 9; i++) {
-    const x = Math.floor(noise(i * 2 + 1) * width), y = Math.floor(noise(i * 2 + 2) * 8);
-    const twinkle = (slow / (2 + noise(i + 99) * 4) + noise(i + 7)) % 1 < 0.12;
-    set(x, y, twinkle ? 'ffffff' : i % 3 ? STAR_DIM : STAR);
-  }
   sprite(MOON, width - 14, 1);
-
   // Mountains along the horizon: lit on the left, shaded on the right.
   for (let i = 0, center = -6; center < width + 12; i++, center += 12 + Math.floor(noise(i + 300) * 14)) {
     const peak = 3 + Math.floor(noise(i + 500) * 4);
@@ -88,19 +89,12 @@ export function decorPixels(width: number, scene: DecorScene): string[][] {
     }
   }
 
-  // The sea shimmers slowly.
-  for (let y = HORIZON + 1; y < height; y++) {
-    for (let i = 0; i < width / 9; i++) {
-      const x = Math.floor(noise(y * 97 + i) * width + t * (0.6 + (y % 3) * 0.3)) % width;
-      set(x, y, SHIMMER); set(x + 1, y, SHIMMER);
-    }
-  }
+  level = 2;
   // Small ice floes drift far out.
   for (let i = 0; i < width / 50; i++) {
     const x = scene.floe + 18 + Math.floor(noise(i + 700) * Math.max(1, width - scene.floe - 24)), size = 3 + Math.floor(noise(i + 800) * 4);
     for (let dx = 0; dx < size; dx++) { set(x + dx, FLOE, ICE_SHADE); set(x + dx, FLOE + 1, ICE_EDGE); }
   }
-
   // The ice floe, its rounded end and its crack.
   for (let x = 0; x < scene.floe + 2; x++) {
     if (x < scene.floe - 1) set(x, FLOE, ICE);
@@ -110,6 +104,37 @@ export function decorPixels(width: number, scene: DecorScene): string[][] {
   }
   set(scene.floe - 6, FLOE, CRACK); set(scene.floe - 5, FLOE + 1, CRACK); set(scene.floe - 5, FLOE + 2, CRACK);
   if (scene.snowman !== undefined) sprite(SNOWMAN, scene.snowman, FLOE + 1 - SNOWMAN.length);
+  still = { key, canvas, layer };
+  return still;
+}
+
+/** The decor, `width` × DECOR_HEIGHT pixels as hex colors. */
+export function decorPixels(width: number, scene: DecorScene): string[][] {
+  const t = scene.clock;
+  const height = DECOR_HEIGHT;
+  // Stars twinkle in steps, twice a second; snow and sea glide a pixel at a time.
+  const slow = Math.floor(t * 2) / 2;
+  const base = stillDecor(width, scene);
+  const canvas = base.canvas.map((row) => row.slice());
+  const set = (x: number, y: number, color: string) => { if (x >= 0 && x < width && y >= 0 && y < height) canvas[y]![x] = color; };
+  // What moves behind the still decor only shows where nothing covers it.
+  const behind = (x: number, y: number, color: string, level: number) => { if (base.layer[y]?.[x] !== undefined && base.layer[y]![x]! < level) set(x, y, color); };
+  const sprite = (rows: string[], left: number, top: number) => rows.forEach((row, y) => [...row].forEach((c, x) => { if (c !== '.') set(left + x, top + y, colors[c]!); }));
+
+  // Stars: most hold still, each twinkles now and then.
+  for (let i = 0; i < width / 9; i++) {
+    const x = Math.floor(noise(i * 2 + 1) * width), y = Math.floor(noise(i * 2 + 2) * 8);
+    const twinkle = (slow / (2 + noise(i + 99) * 4) + noise(i + 7)) % 1 < 0.12;
+    behind(x, y, twinkle ? 'ffffff' : i % 3 ? STAR_DIM : STAR, 1);
+  }
+
+  // The sea shimmers slowly.
+  for (let y = HORIZON + 1; y < height; y++) {
+    for (let i = 0; i < width / 9; i++) {
+      const x = Math.floor(noise(y * 97 + i) * width + t * (0.6 + (y % 3) * 0.3)) % width;
+      behind(x, y, SHIMMER, 2); behind(x + 1, y, SHIMMER, 2);
+    }
+  }
 
   // A light snowfall.
   for (let i = 0; i < width / 26; i++) {

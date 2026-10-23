@@ -1,6 +1,7 @@
 import xterm from '@xterm/headless';
 import { AmbientMood, bandCells, bandHit, bandRows, paintCells, penguinFrame, readSignals } from './ambient.ts';
 import type { BandCell } from './ambient.ts';
+import { FRAME_MS, startFrames } from './frame-clock.ts';
 import { playTerminalEffect, startSound } from './terminal-output.ts';
 import type { EffectOptions } from './terminal-output.ts';
 import type { ReactionEvent } from './reactions.ts';
@@ -9,8 +10,28 @@ import type { TerminalStream } from './terminal-animation.ts';
 const BUSY_ROWS = 15;
 /** Unchanged cells between two changes are rewritten when cheaper than moving the cursor. */
 const GAP = 6;
-/** The band's frame time: 30 frames a second, only the changed cells sent. */
-const BAND_FRAME = 33;
+
+const cellFlags = (cell: xterm.IBufferCell) => (cell.isBold() ? 1 : 0) | (cell.isDim() ? 2 : 0) | (cell.isItalic() ? 4 : 0)
+  | (cell.isUnderline() ? 8 : 0) | (cell.isInverse() ? 16 : 0) | (cell.isInvisible() ? 32 : 0) | (cell.isStrikethrough() ? 64 : 0);
+
+/** A cell's full SGR style, from a reset. */
+function cellStyle(cell: xterm.IBufferCell): string {
+  const codes = [0];
+  if (cell.isBold()) codes.push(1);
+  if (cell.isDim()) codes.push(2);
+  if (cell.isItalic()) codes.push(3);
+  if (cell.isUnderline()) codes.push(4);
+  if (cell.isInverse()) codes.push(7);
+  if (cell.isInvisible()) codes.push(8);
+  if (cell.isStrikethrough()) codes.push(9);
+  for (const fg of [true, false]) {
+    const color = fg ? cell.getFgColor() : cell.getBgColor();
+    if (fg ? cell.isFgRGB() : cell.isBgRGB())
+      codes.push(fg ? 38 : 48, 2, color >> 16 & 255, color >> 8 & 255, color & 255);
+    else if (fg ? cell.isFgPalette() : cell.isBgPalette()) codes.push(fg ? 38 : 48, 5, color);
+  }
+  return `\x1b[${codes.join(';')}m`;
+}
 
 // The outer terminal belongs to this launcher. The AI has a separate PTY and
 // continues updating this bounded virtual screen while an animation is shown.
@@ -26,13 +47,18 @@ export class SessionTerminal {
   // Ambient band below the AI: the penguin, fed by what the AI's screen shows.
   private readonly mood: AmbientMood | undefined;
   private band = 0;
-  private ticker: ReturnType<typeof setInterval> | undefined;
+  /** Stops the band's frames: 60 a second, only the changed cells sent. */
+  private stopFrames: (() => void) | undefined;
+  /** The AI wrote since the last frame: with the band, its screen is repainted on the band's frames. */
+  private dirty = false;
   private lastOutput = -Infinity;
   private lastInput = -Infinity;
   private lastTick = -Infinity;
   private shownBand: BandCell[][] = [];
   /** How far the penguin is from its place, so a click finds it out at sea. */
   private penguinAway = 0;
+  /** Read again for every cell of the AI's screen, sixty times a second. */
+  private cell: xterm.IBufferCell | undefined;
   /** The AI rows as last painted, so unchanged rows are not sent again. */
   private shownRows: string[] = [];
   private readonly now: () => number;
@@ -46,8 +72,7 @@ export class SessionTerminal {
       this.mood = new AmbientMood(this.now());
       this.band = bandRows(columns, rows);
       this.mood.resize(columns);
-      this.ticker = setInterval(() => this.renderBand(), BAND_FRAME);
-      this.ticker.unref?.();
+      this.stopFrames = startFrames(() => this.frame());
     }
     this.terminal = new xterm.Terminal({
       cols: columns, rows: Math.max(1, rows - this.band),
@@ -105,12 +130,23 @@ export class SessionTerminal {
   }
 
   private schedule(): void {
-    if (this.closed || this.animating || this.timer) return;
-    this.timer = setTimeout(() => { this.timer = undefined; this.render(); }, 33);
+    if (this.closed || this.animating) return;
+    // The AI and the penguin share one frame: one write, one terminal refresh.
+    if (this.stopFrames) { this.dirty = true; return; }
+    if (this.timer) return;
+    this.timer = setTimeout(() => { this.timer = undefined; this.render(); }, FRAME_MS);
+  }
+
+  private frame(): void {
+    // A terminal still busy with the last frame skips this one rather than fall behind.
+    if (this.output.writableNeedDrain) return;
+    if (this.dirty) this.render();
+    else this.renderBand();
   }
 
   render(): void {
     if (this.closed || this.animating) return;
+    this.dirty = false;
     const terminal = this.terminal;
     const buffer = terminal.buffer.active;
     // Repaint the viewport only. Never relay the child's escape sequences to
@@ -120,25 +156,17 @@ export class SessionTerminal {
     for (let y = 0; y < terminal.rows; y++) {
       const line = buffer.getLine(buffer.viewportY + y);
       let row = '', previous = '';
+      let flags = -1, fgMode = -1, fg = -1, bgMode = -1, bg = -1;
       for (let x = 0; x < terminal.cols; x++) {
-        const cell = line?.getCell(x);
+        const cell = line?.getCell(x, this.cell ??= buffer.getNullCell());
         if (!cell || cell.getWidth() === 0) continue;
-        const codes = [0];
-        if (cell.isBold()) codes.push(1);
-        if (cell.isDim()) codes.push(2);
-        if (cell.isItalic()) codes.push(3);
-        if (cell.isUnderline()) codes.push(4);
-        if (cell.isInverse()) codes.push(7);
-        if (cell.isInvisible()) codes.push(8);
-        if (cell.isStrikethrough()) codes.push(9);
-        for (const fg of [true, false]) {
-          const color = fg ? cell.getFgColor() : cell.getBgColor();
-          if (fg ? cell.isFgRGB() : cell.isBgRGB())
-            codes.push(fg ? 38 : 48, 2, color >> 16 & 255, color >> 8 & 255, color & 255);
-          else if (fg ? cell.isFgPalette() : cell.isBgPalette()) codes.push(fg ? 38 : 48, 5, color);
+        // Most cells share their neighbor's colors: the style is only rebuilt when they change.
+        if (cellFlags(cell) !== flags || cell.getFgColorMode() !== fgMode || cell.getFgColor() !== fg
+          || cell.getBgColorMode() !== bgMode || cell.getBgColor() !== bg) {
+          [flags, fgMode, fg, bgMode, bg] = [cellFlags(cell), cell.getFgColorMode(), cell.getFgColor(), cell.getBgColorMode(), cell.getBgColor()];
+          const style = cellStyle(cell);
+          if (style !== previous) { row += style; previous = style; }
         }
-        const style = `\x1b[${codes.join(';')}m`;
-        if (style !== previous) { row += style; previous = style; }
         row += cell.getChars() || ' ';
       }
       // Only the rows that changed: a spinner should not resend the whole screen.
@@ -249,7 +277,7 @@ export class SessionTerminal {
   async dispose(): Promise<void> {
     this.closed = true;
     if (this.timer) clearTimeout(this.timer);
-    if (this.ticker) clearInterval(this.ticker);
+    this.stopFrames?.();
     await this.pending;
     this.terminal.dispose();
   }

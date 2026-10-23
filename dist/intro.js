@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { waitFrame } from "./frame-clock.js";
 import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, parseGraphics, queryTerminal } from "./mascot-render.js";
 import { reactionDefinitions } from "./reactions.js";
 import { effectOptions, startSound } from "./terminal-output.js";
@@ -169,8 +170,8 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
         }
         let start = performance.now();
         // Only changed lines are rewritten: the truecolor mascot is heavy for ConPTY.
-        let previous = [], size = '', drawn = false;
-        for (;;) {
+        let previous = [], size = '', drawn = false, deadline = start;
+        for (;; deadline = await waitFrame(deadline)) {
             let seconds = (performance.now() - start) / 1000;
             // A key skips the splash; on the keyword list, it closes the intro.
             if (presses && keywords && seconds < SPLASH_FOR) {
@@ -180,6 +181,9 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
             }
             if (presses || seconds * 1000 >= (keywords ? SPLASH_FOR * 1000 + timeoutMs : SPLASH_FOR * 1000))
                 break;
+            // A terminal still busy with the last frame skips this one rather than fall behind.
+            if (stdout.writableNeedDrain)
+                continue;
             const width = stdout.columns ?? cols, height = stdout.rows ?? rows;
             const frame = introFrame(seconds, width, height, keywords, graphics);
             if (frame.length !== previous.length || size !== `${width}x${height}`) {
@@ -197,7 +201,6 @@ export async function playIntro(stdout = process.stdout, stdin = process.stdin, 
                 drawn = true;
             }
             previous = frame;
-            await delay(40);
         }
     }
     finally {

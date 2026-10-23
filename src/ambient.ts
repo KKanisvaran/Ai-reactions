@@ -420,6 +420,15 @@ function penguinPixels(view: AmbientView, pose: Pose): string[] {
 
 const RESET = '\x1b[0m';
 const rgb = (hex: string) => `${parseInt(hex.slice(0, 2), 16)};${parseInt(hex.slice(2, 4), 16)};${parseInt(hex.slice(4, 6), 16)}`;
+/** The style of a cell showing `top` above `bottom`: the band has few colors and 60 frames a second. */
+const pairStyles = new Map<string, Map<string, string>>();
+function pairStyle(top: string, bottom: string): string {
+  let below = pairStyles.get(top);
+  if (!below) pairStyles.set(top, below = new Map());
+  let style = below.get(bottom);
+  if (style === undefined) below.set(bottom, style = `\x1b[38;2;${rgb(top)};48;2;${rgb(bottom)}m`);
+  return style;
+}
 const bold = (hex: string) => `\x1b[1;38;2;${rgb(hex)}m`;
 const mixHex = (a: string, b: string) => [0, 2, 4]
   .map((i) => Math.round((parseInt(a.slice(i, i + 2), 16) + parseInt(b.slice(i, i + 2), 16)) / 2).toString(16).padStart(2, '0')).join('');
@@ -466,7 +475,7 @@ export function bandHit(columns: number, column: number, row: number, away = 0):
 /** The band: the penguin in its polar night, `columns` cells per line. */
 export function bandCells(view: AmbientView, columns: number): BandCell[][] {
   const width = Math.max(1, columns), height = DECOR_HEIGHT;
-  const text = Array.from({ length: BAND_ROWS }, () => new Array<{ char: string; style: string } | undefined>(width));
+  const text = Array.from({ length: BAND_ROWS }, () => new Array<{ char: string; style: string } | undefined>(width).fill(undefined));
   // The caption sits on the second line, above the scene.
   const captionRow = 1;
   const write = (x: number, chars: string, style: string) => {
@@ -509,12 +518,14 @@ export function bandCells(view: AmbientView, columns: number): BandCell[][] {
   return text.map((line, row) => {
     // Text sits on the plain sky or sea of its line, so it stays readable.
     const behind = `\x1b[48;2;${rgb(mixHex(backdrop(row * 2), backdrop(row * 2 + 1)))}m`;
-    return Array.from({ length: width }, (_, cx): BandCell => {
+    const top = canvas[row * 2]!, bottom = canvas[row * 2 + 1]!, cells: BandCell[] = [];
+    for (let cx = 0; cx < width; cx++) {
       const cell = line[cx];
-      if (cx >= shown) return { style: '', char: ' ' };
-      if (cell) return { style: `${cell.style}${behind}`, char: cell.char };
-      return { style: `\x1b[38;2;${rgb(canvas[row * 2]![cx]!)};48;2;${rgb(canvas[row * 2 + 1]![cx]!)}m`, char: '▀' };
-    });
+      if (cx >= shown) cells.push({ style: '', char: ' ' });
+      else if (cell) cells.push({ style: `${cell.style}${behind}`, char: cell.char });
+      else cells.push({ style: pairStyle(top[cx]!, bottom[cx]!), char: '▀' });
+    }
+    return cells;
   });
 }
 

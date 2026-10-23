@@ -1,4 +1,4 @@
-import { setTimeout as delay } from 'node:timers/promises';
+import { waitFrame } from './frame-clock.ts';
 import { effectDuration } from './sound.ts';
 import type { ReactionEvent } from './reactions.ts';
 
@@ -7,6 +7,8 @@ export interface TerminalStream {
   isTTY?: boolean;
   columns?: number;
   rows?: number;
+  /** Set while the terminal is behind on what was sent. */
+  writableNeedDrain?: boolean;
   write(text: string): unknown;
 }
 
@@ -120,12 +122,11 @@ export async function animateTerminal(event: FrameEvent, stream: TerminalStream 
   const start = performance.now();
   const duration = effectDuration(event.reaction, event.intensity);
   let drawn = false;
-  while (performance.now() - start < duration) {
+  for (let deadline = start; performance.now() - start < duration; deadline = await waitFrame(deadline)) {
     if (!canAnimate(stream)) break;
     if (drawn) stream.write(`\x1b[${HEIGHT + 2}F`);
     const frame = terminalFrame(event, (performance.now() - start) / 1000);
     stream.write(`${frame.split('\n').map((line) => `${line}\x1b[K`).join('\n')}\n`);
     drawn = true;
-    await delay(50);
   }
 }

@@ -1,4 +1,5 @@
 import { setTimeout as delay } from 'node:timers/promises';
+import { waitFrame } from './frame-clock.ts';
 import { imagesAllowed, mascotAspect, mascotBlocks, mascotHeight, mascotSixel, parseGraphics, queryTerminal } from './mascot-render.ts';
 import type { TerminalGraphics } from './mascot-render.ts';
 import { reactionDefinitions } from './reactions.ts';
@@ -8,6 +9,8 @@ interface IntroStream {
   isTTY?: boolean;
   columns?: number;
   rows?: number;
+  /** Set while the terminal is behind on what was sent. */
+  writableNeedDrain?: boolean;
   write(text: string): unknown;
 }
 interface IntroInput {
@@ -186,12 +189,14 @@ export async function playIntro(stdout: IntroStream = process.stdout, stdin: Int
     }
     let start = performance.now();
     // Only changed lines are rewritten: the truecolor mascot is heavy for ConPTY.
-    let previous: string[] = [], size = '', drawn = false;
-    for (;;) {
+    let previous: string[] = [], size = '', drawn = false, deadline = start;
+    for (;; deadline = await waitFrame(deadline)) {
       let seconds = (performance.now() - start) / 1000;
       // A key skips the splash; on the keyword list, it closes the intro.
       if (presses && keywords && seconds < SPLASH_FOR) { presses = 0; start -= (SPLASH_FOR - seconds) * 1000; seconds = SPLASH_FOR; }
       if (presses || seconds * 1000 >= (keywords ? SPLASH_FOR * 1000 + timeoutMs : SPLASH_FOR * 1000)) break;
+      // A terminal still busy with the last frame skips this one rather than fall behind.
+      if (stdout.writableNeedDrain) continue;
       const width = stdout.columns ?? cols, height = stdout.rows ?? rows;
       const frame = introFrame(seconds, width, height, keywords, graphics);
       if (frame.length !== previous.length || size !== `${width}x${height}`) {
@@ -203,7 +208,6 @@ export async function playIntro(stdout: IntroStream = process.stdout, stdin: Int
       const image = drawn ? undefined : introImage(seconds, width, height, keywords, graphics);
       if (image) { stdout.write(image); drawn = true; }
       previous = frame;
-      await delay(40);
     }
   } finally {
     stdin.off('data', onKey);

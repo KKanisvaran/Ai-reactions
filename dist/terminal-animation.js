@@ -1,4 +1,4 @@
-import { setTimeout as delay } from 'node:timers/promises';
+import { waitFrame } from "./frame-clock.js";
 import { effectDuration } from "./sound.js";
 const WIDTH = 58;
 const HEIGHT = 11;
@@ -153,7 +153,7 @@ export async function animateTerminal(event, stream = process.stdout) {
     const start = performance.now();
     const duration = effectDuration(event.reaction, event.intensity);
     let drawn = false;
-    while (performance.now() - start < duration) {
+    for (let deadline = start; performance.now() - start < duration; deadline = await waitFrame(deadline)) {
         if (!canAnimate(stream))
             break;
         if (drawn)
@@ -161,6 +161,5 @@ export async function animateTerminal(event, stream = process.stdout) {
         const frame = terminalFrame(event, (performance.now() - start) / 1000);
         stream.write(`${frame.split('\n').map((line) => `${line}\x1b[K`).join('\n')}\n`);
         drawn = true;
-        await delay(50);
     }
 }
