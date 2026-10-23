@@ -18,7 +18,8 @@ child.onData((data) => {
   terminal.write(data);
   if (!started && output.includes('SESSION_READY')) { started = true; child.write('go\r'); }
 });
-const deadline = setTimeout(() => { child.kill(); finish(2); }, 28000);
+// About 20 s on a laptop; shared Windows CI runners can take half as long again.
+const deadline = setTimeout(() => { child.kill(); finish(2); }, 45000);
 function finish(code) {
   if (ended) return;
   ended = true;
